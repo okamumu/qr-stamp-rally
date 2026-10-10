@@ -76,7 +76,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
  input{font:inherit;padding:10px;width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:8px}
  ul{margin:14px 0 0;padding-left:18px;color:#666;font-size:14px}
 </style>
-<h1>企業展示スタンプラリー　受付</h1>
+<h1>企業展示スタンプラリー　照会・抽選（抽選台）</h1>
 <?php if ($msg): ?><div class="done"><?= $h($msg) ?></div><?php endif; ?>
 
 <?php if ($code === ''): ?>

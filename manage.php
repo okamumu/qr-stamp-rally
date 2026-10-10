@@ -101,22 +101,27 @@ ol { margin:0 0 4mm 5mm; font-size:10.5pt; line-height:1.8; }
 $base = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
       . dirname($_SERVER['SCRIPT_NAME']);
 if ($print_admin):
+    $rurl = $base . '/register.php?admin=' . rawurlencode(admin_key());
     $aurl = $base . '/admin.php?admin=' . rawurlencode(admin_key());
     $copies = min(10, max(1, (int)($_GET['n'] ?? 4)));
     for ($i = 0; $i < $copies; $i++): ?>
 <div class="slip">
-<h1>スタンプラリー受付　スタッフ用（取扱注意）</h1>
+<h1>スタンプラリー運営　スタッフ用（取扱注意）</h1>
 <p class="ev"><?= $h(event_title()) ?>　<?= $h(event_date()) ?></p>
-<ol>
-<li>受付でお使いになる端末で右のQRを読み、受付画面を開いて<b>ブックマーク</b>します</li>
-<li>参加者の名札QRを読む →「<b>参加登録する</b>」を押すとラリーに参加できます</li>
-<li>条件を満たした方には「<b>抽選を実施</b>」→ くじを引いてもらい、参加賞を渡します</li>
-</ol>
-<div class="row">
-<div class="key">受付画面<br><b style="font-size:11pt">admin.php</b></div>
-<div class="qr" data-u="<?= $h($aurl) ?>"></div>
+<p style="font-size:10pt;margin-bottom:3mm">担当の画面のQRを端末で読み、<b>ブックマーク</b>してください。</p>
+<div class="row" style="gap:16mm">
+<div style="text-align:center">
+  <div class="qr" data-u="<?= $h($rurl) ?>"></div>
+  <b style="font-size:10.5pt">① 参加登録（受付係）</b><br>
+  <span style="font-size:8.5pt;color:#555">名札QRを読むと自動で登録。<br>ボタン操作なし</span>
 </div>
-<p class="n">※このQRには運営の鍵が入っています。<b>掲示したり机に置いたままにしないでください</b>
+<div style="text-align:center">
+  <div class="qr" data-u="<?= $h($aurl) ?>"></div>
+  <b style="font-size:10.5pt">② 照会・抽選（抽選台）</b><br>
+  <span style="font-size:8.5pt;color:#555">名札QRを読む→抽選の実施・<br>参加賞の受渡しを記録</span>
+</div>
+</div>
+<p class="n">※QRには運営の鍵が入っています。<b>掲示したり机に置いたままにしないでください</b>
 （読まれると参加者が自分で抽選済みにできてしまいます）。紛失時は管理コンソールから鍵を再発行してください。</p>
 </div>
 <?php endfor; else:
@@ -216,7 +221,8 @@ document.querySelectorAll('.qr').forEach(function (e) {
 <?php $aurl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
             . dirname($_SERVER['SCRIPT_NAME']) . '/admin.php?admin=' . rawurlencode(admin_key()); ?>
 <p class="st mono"><?= $h(admin_key()) ?></p>
-<p class="st">受付画面 <a href="admin.php?admin=<?= $h(admin_key()) ?>">admin.php</a>／
+<p class="st">参加登録（受付係） <a href="register.php?admin=<?= $h(admin_key()) ?>">register.php</a>／
+照会・抽選（抽選台） <a href="admin.php?admin=<?= $h(admin_key()) ?>">admin.php</a>／
 集計 <a href="export.php?admin=<?= $h(admin_key()) ?>">export.php</a>／
 <a href="#" onclick="document.getElementById('aqr').hidden=!document.getElementById('aqr').hidden;return false">受付用QRを表示</a>／
 <a href="?print=admin" target="_blank">受付スタッフ用紙を印刷</a>（4枚。枚数は ?print=admin&n=6 のように）</p>
