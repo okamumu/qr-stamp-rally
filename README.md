@@ -69,8 +69,10 @@ docker run -d --name stamp -p 8080:80 -e STAMP_DB_DIR=/tmp/stamp \
 
 ### 事前参加者の一括登録（API）
 
-参加が最初から分かっている人は、受付の鍵で登録APIを叩いて先に登録しておける
+参加が最初から分かっている人は、登録APIを叩いて先に登録しておける
 （当日の受付タップは飛び込み対応だけになる）。冪等なので何度流しても安全。
+**APIは受付の鍵（admin）が必須**＝admin.php の認証ゲートの内側にあり、
+鍵なしは 403。鍵は manage.php から再発行（＝即失効）できる。
 
 ```sh
 curl "https://…/stamp/admin.php?admin=鍵&api=register&n=参加証コード"
