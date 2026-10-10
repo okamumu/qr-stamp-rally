@@ -67,6 +67,16 @@ docker run -d --name stamp -p 8080:80 -e STAMP_DB_DIR=/tmp/stamp \
 
 ブースのスキャンはカメラなしでも `booth.php?b=…&key=…&scan=1&n=コード` で叩ける。
 
+### 事前参加者の一括登録（API）
+
+参加が最初から分かっている人は、受付の鍵で登録APIを叩いて先に登録しておける
+（当日の受付タップは飛び込み対応だけになる）。冪等なので何度流しても安全。
+
+```sh
+curl "https://…/stamp/admin.php?admin=鍵&api=register&n=参加証コード"
+# → {"ok":true,"code":"…","already":false}
+```
+
 ## 当日の運用
 
 1. **受付**：来場者の名札QRを admin 画面で読み「参加登録する」を1タップ

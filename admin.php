@@ -10,6 +10,24 @@ if (!admin_ok()) {
 
 $code = strtoupper(trim(isset($_REQUEST['n']) ? $_REQUEST['n'] : ''));
 $msg  = '';
+
+// --- 登録API（curl等から叩ける）: ?admin=鍵&api=register&n=コード ---
+// 事前に参加が分かっている人を名簿から一括登録する用。例:
+//   curl "https://…/stamp/admin.php?admin=鍵&api=register&n=ABC23X"
+if (isset($_REQUEST['api'])) {
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+    if ($_REQUEST['api'] !== 'register') {
+        http_response_code(400);
+        echo json_encode(['ok' => false, 'error' => 'unknown api']); exit;
+    }
+    if (!pass_ok($code)) {
+        echo json_encode(['ok' => false, 'code' => $code, 'error' => 'invalid code']); exit;
+    }
+    $dup = pass_registered($code);
+    if (!$dup) pass_register($code);
+    echo json_encode(['ok' => true, 'code' => $code, 'already' => $dup]); exit;
+}
 $boo  = booth_names();
 $all  = count($boo);
 
