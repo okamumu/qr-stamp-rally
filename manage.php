@@ -77,8 +77,9 @@ $cnt = [];
 foreach (['scan', 'draw', 'pass', 'booth'] as $t)
     $cnt[$t] = (int)db()->query("SELECT COUNT(*) FROM $t")->fetchColumn();
 
-// --- 未使用キーの登録用紙（印刷ビュー） ---
+// --- 印刷ビュー（print=1: 企業登録用紙 / print=admin: 受付スタッフ用紙） ---
 if (isset($_GET['print'])) {
+    $print_admin = ($_GET['print'] === 'admin');
     ?><!doctype html><html lang="ja"><head><meta charset="utf-8">
 <title>企業ブース登録用紙</title>
 <style>
@@ -96,8 +97,30 @@ ol { margin:0 0 4mm 5mm; font-size:10.5pt; line-height:1.8; }
 .qr svg { width:30mm; height:30mm; }
 .n { font-size:8.5pt; color:#666; margin-top:4mm; }
 </style></head><body>
-<?php $eurl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
-            . dirname($_SERVER['SCRIPT_NAME']) . '/enroll.php';
+<?php
+$base = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
+      . dirname($_SERVER['SCRIPT_NAME']);
+if ($print_admin):
+    $aurl = $base . '/admin.php?admin=' . rawurlencode(admin_key());
+    $copies = min(10, max(1, (int)($_GET['n'] ?? 4)));
+    for ($i = 0; $i < $copies; $i++): ?>
+<div class="slip">
+<h1>スタンプラリー受付　スタッフ用（取扱注意）</h1>
+<p class="ev"><?= $h(event_title()) ?>　<?= $h(event_date()) ?></p>
+<ol>
+<li>受付でお使いになる端末で右のQRを読み、受付画面を開いて<b>ブックマーク</b>します</li>
+<li>参加者の名札QRを読む →「<b>参加登録する</b>」を押すとラリーに参加できます</li>
+<li>条件を満たした方には「<b>抽選を実施</b>」→ くじを引いてもらい、参加賞を渡します</li>
+</ol>
+<div class="row">
+<div class="key">受付画面<br><b style="font-size:11pt">admin.php</b></div>
+<div class="qr" data-u="<?= $h($aurl) ?>"></div>
+</div>
+<p class="n">※このQRには運営の鍵が入っています。<b>掲示したり机に置いたままにしないでください</b>
+（読まれると参加者が自分で抽選済みにできてしまいます）。紛失時は管理コンソールから鍵を再発行してください。</p>
+</div>
+<?php endfor; else:
+$eurl = $base . '/enroll.php';
 foreach ($unused as $k): ?>
 <div class="slip">
 <h1>企業展示スタンプラリー　ブース登録のご案内</h1>
@@ -115,7 +138,7 @@ foreach ($unused as $k): ?>
 <p class="n">※同じキーでもう一度開くと、発行済みの画面を再表示できます。
 お困りの際は総合受付までお知らせください。</p>
 </div>
-<?php endforeach; ?>
+<?php endforeach; endif; ?>
 <script src="qrgen.js"></script>
 <script>
 document.querySelectorAll('.qr').forEach(function (e) {
@@ -195,7 +218,8 @@ document.querySelectorAll('.qr').forEach(function (e) {
 <p class="st mono"><?= $h(admin_key()) ?></p>
 <p class="st">受付画面 <a href="admin.php?admin=<?= $h(admin_key()) ?>">admin.php</a>／
 集計 <a href="export.php?admin=<?= $h(admin_key()) ?>">export.php</a>／
-<a href="#" onclick="document.getElementById('aqr').hidden=!document.getElementById('aqr').hidden;return false">受付用QRを表示</a></p>
+<a href="#" onclick="document.getElementById('aqr').hidden=!document.getElementById('aqr').hidden;return false">受付用QRを表示</a>／
+<a href="?print=admin" target="_blank">受付スタッフ用紙を印刷</a>（4枚。枚数は ?print=admin&n=6 のように）</p>
 <div id="aqr" hidden>
   <div id="aqrimg"></div>
   <p class="st">運営端末でこのQRを読むと受付画面が開く。**鍵入りなので掲示しない**こと</p>
