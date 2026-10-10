@@ -33,12 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg = '大会名・開催日を保存しました';
     } elseif ($act === 'need') {
         $n1 = max(1, (int)($_POST['need1'] ?? 1));
-        $n2 = max(0, (int)($_POST['need2'] ?? 0));
+        $n2 = max(1, (int)($_POST['need2'] ?? 1));
         $st = db()->prepare('INSERT INTO setting (k, v) VALUES (?, ?)
                              ON CONFLICT(k) DO UPDATE SET v = excluded.v');
         $st->execute(['need1', $n1]);
         $st->execute(['need2', $n2]);
-        $msg = "抽選条件を保存しました（1回目 {$n1}社／2回目 " . ($n2 ?: '全') . '社）';
+        $msg = "抽選条件を保存しました（1回目 {$n1}社／2回目 {$n2}社）";
     } elseif ($act === 'adminkey' && ($_POST['sure'] ?? '') === 'yes') {
         admin_key_rotate();
         $msg = '受付の鍵を再発行しました（古いURL・QRは無効になります）';
@@ -191,8 +191,8 @@ document.querySelectorAll('.qr').forEach(function (e) {
 <h2>抽選条件</h2>
 <form method="post">
   <label>1回目 <input type="number" name="need1" min="1" value="<?= need1() ?>"> 社</label>
-  <label>2回目 <input type="number" name="need2" min="0"
-         value="<?= setting('need2', NEED2) ?>"> 社（0=全社）</label>
+  <label>2回目 <input type="number" name="need2" min="1"
+         value="<?= need2() ?>"> 社</label>
   <button name="act" value="need">保存</button>
 </form>
 

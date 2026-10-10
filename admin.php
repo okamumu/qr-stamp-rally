@@ -45,7 +45,7 @@ if ($code !== '' && isset($_POST['act'])) {
     } elseif ($_POST['act'] === 'draw1' && $d['count'] < 1 && $got >= need1()) {
         db()->prepare('INSERT INTO draw (ts, code, n) VALUES (?, ?, 1)')->execute([now_(), $code]);
         $msg = '1回目の抽選を記録しました';
-    } elseif ($_POST['act'] === 'draw2' && $d['count'] < 2 && $got >= need2()) {
+    } elseif ($_POST['act'] === 'draw2' && $d['count'] === 1 && $got >= need2()) {
         db()->prepare('INSERT INTO draw (ts, code, n) VALUES (?, ?, 2)')->execute([now_(), $code]);
         $msg = '2回目の抽選を記録しました';
     }
@@ -180,7 +180,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 <?php else:
   $got = got_of($code); $n = count($got); $d = draw_of($code);
   $can1 = $n >= need1() && $d['count'] < 1;
-  $can2 = $n >= $all  && $d['count'] < 2;
+  $can2 = $n >= need2() && $d['count'] === 1;   // 2回目は1回目実施済みが前提
 ?>
   <h2>参加証</h2>
   <p class="c"><?= $h($code) ?></p>

@@ -10,7 +10,7 @@
 // ===== 年次設定（年度ごとに見直すのはここだけ）=====
 // 1回目・2回目の抽選に必要な社数の既定値（manage.php でDBに上書き保存できる。0=全社）
 const NEED1 = 4;
-const NEED2 = 0;
+const NEED2 = 8;
 // 管理コンソール（manage.php）の Basic 認証は lib/secret.php（gitに入れない）。
 // 無ければ secret.example.php をコピーして作る
 require __DIR__ . '/secret.php';
@@ -53,10 +53,9 @@ function admin_key_rotate() {
 
 function need1() { return max(1, setting('need1', NEED1)); }
 
-/** 2回目の抽選に必要な社数（0 なら全社） */
+/** 2回目の抽選に必要な社数（常に数値。登録済み社数に依存させない） */
 function need2() {
-    $n = setting('need2', NEED2);
-    return $n > 0 ? $n : count(booths());
+    return max(1, setting('need2', NEED2));
 }
 
 /** 企業登録キーの一覧（DB。発行は manage.php） */
