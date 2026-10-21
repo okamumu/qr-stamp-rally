@@ -138,8 +138,9 @@ function booth_ok($token, $key) {
  *
  * コードは6文字＝先頭5文字（紛らわしい文字を除いた32文字）＋検査文字1桁。
  * 検査文字 = ALPH[ Σ_{i=0..4} (i+1)×idx(c_i) mod 32 ]。
- * 発行は名簿側（次期システム/make_meibo.py）が行い、サーバは事前登録を持たない。
- * 形式が正しければ有効な参加証として扱う（未知でもその場で参加が始まる）。
+ * 発行はサーバ（manage.php の act=issue。採番と同時に参加登録）と
+ * 名簿側（tools/local_qr.html など。未登録のまま＝受付での参加登録が要る）の2経路。
+ * pass_ok() は形式の検証だけを行い、参加の可否は pass テーブルへの登録で決まる。
  */
 const PASS_ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
 

@@ -1,5 +1,5 @@
 <?php
-/** 受付の管理画面。名札QRを運営端末で読むと ?n=CODE が付いて開く。 */
+/** 特典窓口（照会・特典の受け渡し・登録API）。名札QRを運営端末で読むと ?n=CODE が付いて開く。 */
 require_once __DIR__ . '/lib/db.php';
 
 if (!admin_ok()) {

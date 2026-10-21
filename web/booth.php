@@ -102,7 +102,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 <body>
 <header>
   <h1><?= $h($name) ?></h1>
-  <p>スタンプラリー　受付用（参加者には見せないでください）</p>
+  <p>スタンプラリー　読み取り用（参加者には見せないでください）</p>
 </header>
 
 <div id="res"><div class="m" style="color:#888;font-size:18px">「次の参加者を読み取る」を押してください</div></div>

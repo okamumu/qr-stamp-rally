@@ -6,7 +6,7 @@
  *   - 特典の条件（段数と必要ブース数）の変更（DBに保存。config の NEEDS は既定値）
  *   - 出展者登録キーの追加発行と一覧（使用状況つき）
  *   - 未使用キーの登録用紙の印刷ビュー（?print=1）
- *   - 名札QRの発行（?print=badges。採番して印刷するだけで、サーバは控えを持たない）
+ *   - 名札QRのサーバ発行（act=issue。採番と同時に参加登録し、?batch= で再表示・PNG/ZIP配布）
  *   - DBの控えのダウンロード（?backup=1）
  *   - DBの初期化（記録のみ／全部）
  *
@@ -322,7 +322,7 @@ QRのPNGは下の発行分一覧からいつでもダウンロードでき、名
     <div style="text-align:center"><div id="rqrimg"></div><b style="font-size:13px">参加登録（register.php）</b></div>
     <div style="text-align:center"><div id="aqrimg"></div><b style="font-size:13px">特典窓口（reward.php）</b></div>
   </div>
-  <p class="st">運営端末でQRを読むと各画面が開く。**鍵入りなので掲示しない**こと</p>
+  <p class="st">運営端末でQRを読むと各画面が開く。<b>鍵入りなので掲示しない</b>こと</p>
 </div>
 <form method="post" onsubmit="return confirm('運営の鍵を再発行します。配布済みの受付QR・URLは使えなくなります。よろしいですか？')">
   <input type="hidden" name="sure" value="yes">

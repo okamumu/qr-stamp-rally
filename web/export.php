@@ -78,4 +78,4 @@ $k = urlencode(admin_key());
  <a href="?admin=<?= $k ?>&csv=booth">ブース別</a>　
  <a href="?admin=<?= $k ?>&csv=scan">スキャン全件</a>　
  <a href="?admin=<?= $k ?>&csv=draw">特典記録</a></p>
-<p><a href="reward.php?admin=<?= $k ?>">受付へ戻る</a></p>
+<p><a href="reward.php?admin=<?= $k ?>">特典窓口へ戻る</a></p>
