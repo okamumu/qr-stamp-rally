@@ -124,6 +124,9 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   </ol>
   <p style="font-size:13px;color:#777;margin-top:8px">
     うまく読めないときは、参加者に受付へお越しいただくようお伝えください。</p>
+  <p style="font-size:13px;margin-top:6px">
+    <a href="enroll.php?b=<?= $h(rawurlencode($token)) ?>&amp;key=<?= $h(rawurlencode($key)) ?>"
+       style="color:#1f4e9c">この画面のQR・URLを表示する（出展者名の修正もこちら）</a></p>
 </div>
 
 <script src="jsQR.js"></script>

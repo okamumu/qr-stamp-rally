@@ -17,7 +17,25 @@ $keys = enroll_keys();
 
 $err = ''; $booth = null; $renamed = false;
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// ブースの鍵（booth.php のURLと同じ b＋key）でも開ける。
+// 読み取り画面の「登録情報を表示」から戻ってきて、QR・URLの再表示と名前の修正ができる
+$bt = strtoupper(trim((string)($_REQUEST['b'] ?? '')));
+if ($bt !== '' && booth_ok($bt, (string)($_REQUEST['key'] ?? ''))) {
+    $all   = booths();
+    $booth = ['token' => $bt, 'name' => $all[$bt]['name'], 'key' => $all[$bt]['key']];
+    $name  = trim((string)($_POST['name'] ?? ''));
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && $name !== '' && $name !== $booth['name']) {
+        if (mb_strlen($name) > 60) {
+            $err = '出展者名は60文字までです';
+        } else {
+            db()->prepare('UPDATE booth SET name = ? WHERE token = ?')->execute([$name, $bt]);
+            $booth['name'] = $name;
+            $renamed = true;
+        }
+    }
+} elseif ($bt !== '') {
+    sleep(1);                       // ブース鍵の総当たりを遅くする（入力フォームに落とす）
+} elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $name = trim((string)($_POST['name'] ?? ''));
     $key  = strtoupper(trim((string)($_POST['key'] ?? '')));
     $valid = false;
@@ -92,6 +110,13 @@ $url = $booth
     <div class="url"><a href="<?= $h($url) ?>"><?= $h($url) ?></a></div>
     <button class="copy" type="button" id="copyBtn">URLをコピー</button>
   </div>
+  <form method="post" style="text-align:left">
+    <input type="hidden" name="b" value="<?= $h($booth['token']) ?>">
+    <input type="hidden" name="key" value="<?= $h($booth['key']) ?>">
+    <label>出展者名の修正（名札や集計に表示されます。QRとURLは変わりません）
+      <input name="name" value="<?= $h($booth['name']) ?>" maxlength="60"></label>
+    <button type="submit">名前を保存</button>
+  </form>
   <script src="qrgen.js"></script>
   <script>
     var q = qrcode(0, 'M');
