@@ -74,7 +74,9 @@ $url = $booth
  .ng{background:#fdecea;border:1px solid #e57373;color:#b71c1c;padding:10px;border-radius:8px;margin:12px 0}
  .done{background:#e8f5e9;border:1px solid #81c784;padding:14px;border-radius:8px;margin:12px 0;text-align:center}
  .done .qr{margin:10px auto}
- .url{font-family:ui-monospace,monospace;font-size:11px;word-break:break-all;color:#333}
+ .url{font-family:ui-monospace,monospace;font-size:11px;word-break:break-all}
+ .url a{color:#1f4e9c}
+ .copy{display:inline-block;width:auto;padding:8px 16px;font-size:14px;margin-top:8px}
  p.c{color:#777;font-size:13px}
 </style>
 <h1>スタンプラリー　ブース登録</h1>
@@ -83,10 +85,11 @@ $url = $booth
 <?php if ($booth): ?>
   <div class="done">
     <b><?= $h($booth['name']) ?></b> のブースを<?= $renamed ? '修正しました（出展者名のみ。QRはそのまま有効です）' : '登録しました' ?>。<br>
-    下のQRをブース担当の端末で読む（または開く）と読み取り画面になります。<br>
-    <b>この画面をブックマークまたは印刷してください。</b>
+    この端末で使うなら下のリンクを開いて<b>ブックマーク</b>、
+    別の端末で使うなら下のQRをその端末で読んでください。<br>
     <div class="qr" id="qr"></div>
-    <div class="url"><?= $h($url) ?></div>
+    <div class="url"><a href="<?= $h($url) ?>"><?= $h($url) ?></a></div>
+    <button class="copy" type="button" id="copyBtn">URLをコピー</button>
   </div>
   <script src="qrgen.js"></script>
   <script>
@@ -94,6 +97,19 @@ $url = $booth
     q.addData(<?= json_encode($url) ?>);
     q.make();
     document.getElementById('qr').innerHTML = q.createImgTag(5, 8);
+    // コピーボタン（http のローカル環境など clipboard が使えないときは選択で代用）
+    document.getElementById('copyBtn').addEventListener('click', async function () {
+      var u = <?= json_encode($url) ?>, b = this;
+      try {
+        await navigator.clipboard.writeText(u);
+        b.textContent = 'コピーしました';
+      } catch (e) {
+        var r = document.createRange();
+        r.selectNodeContents(document.querySelector('.url'));
+        var s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        b.textContent = '選択しました（長押しでコピー）';
+      }
+    });
   </script>
 <?php else: ?>
   <form method="post">
