@@ -28,11 +28,19 @@ node tests/test_page.js   # index.html のスクリプトを fetch モックで�
 
 ## ローカルで動かす
 
-PHP 7.4 を想定した書き方（レンタルサーバ向け）。動かす前に:
+PHP 7.4 を想定した書き方（レンタルサーバ向け）。Dockerfile があるので:
 
-1. `web/lib/secret.php` を `secret.example.php` からコピーして作る（manage.php の Basic 認証。git に入れない）
-2. DB の置き場所を環境変数 `STAMP_DB_DIR` で指定する（未指定だと `lib/` の4つ上の `rentai_stamp/`
-   ——さくらのレンタルサーバでホーム直下＝公開領域の外になる深さ）
+```sh
+docker build -t rentai-stamp .
+docker run -d -p 8080:80 \
+  -v "$PWD/web/lib/secret.php:/var/www/html/lib/secret.php:ro" \
+  -v stamp-data:/data rentai-stamp
+```
+
+- `web/lib/secret.php` は `secret.example.php` からコピーして作る（manage.php の Basic 認証）。
+  イメージには入れず（.dockerignore）実行時にマウントする
+- DB の置き場所は環境変数 `STAMP_DB_DIR`（Dockerfile では `/data`。未指定だと `lib/` の4つ上の
+  `rentai_stamp/`——さくらのレンタルサーバでホーム直下＝公開領域の外になる深さ）
 
 カメラがなくても `booth.php?b=トークン&key=鍵&scan=1&n=コード` を直接叩けば読み取りを記録できる。
 `admin.php?admin=鍵&api=register&n=コード` で参加登録を API からもできる（名簿からの一括登録用）。

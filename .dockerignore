@@ -1,0 +1,6 @@
+# 鍵とデータはイメージに入れない（実行時にマウントする）
+web/lib/secret.php
+*.sqlite
+*.sqlite-*
+backup_*.sqlite
+.git
