@@ -77,6 +77,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($act === 'adminkey' && ($_POST['sure'] ?? '') === 'yes') {
         admin_key_rotate();
         $msg = '受付の鍵を再発行しました（古いURL・QRは無効になります）';
+    } elseif ($act === 'issue') {
+        // 名札QRのサーバ発行。採番と同時に参加登録する（受付での登録は不要）。
+        // 名簿側（外部ツール）で発行したコードは未登録のままなので従来どおり受付で登録する
+        $n = min(100, max(1, (int)($_POST['n'] ?? 10)));
+        $batch = date('Ymd_His');
+        $st = db()->prepare('INSERT OR IGNORE INTO pass (code, ts, note) VALUES (?, ?, ?)');
+        for ($i = 0; $i < $n; ) {
+            $c = pass_new();
+            if (!pass_registered($c)) { $st->execute([$c, now_(), 'srv:' . $batch]); $i++; }
+        }
+        header('Location: ' . $_SERVER['SCRIPT_NAME'] . '?batch=' . $batch
+             . '&m=' . urlencode("名札QRを {$n} 件発行しました（参加登録済み）"));
+        exit;
     } elseif ($act === 'addkeys') {
         $n = min(50, max(1, (int)($_POST['n'] ?? 1)));
         $A = PASS_ALPH;
@@ -112,12 +125,23 @@ $cnt = [];
 foreach (['scan', 'draw', 'pass', 'booth'] as $t)
     $cnt[$t] = (int)db()->query("SELECT COUNT(*) FROM $t")->fetchColumn();
 
+// サーバ発行した名札QRのバッチ（?batch=発行日時 でその発行分のQRを表示・ダウンロード）
+$batch  = isset($_GET['batch']) ? preg_replace('/[^0-9_]/', '', (string)$_GET['batch']) : '';
+$bcodes = [];
+if ($batch !== '') {
+    $q = db()->prepare('SELECT code FROM pass WHERE note = ? ORDER BY code');
+    $q->execute(['srv:' . $batch]);
+    $bcodes = $q->fetchAll(PDO::FETCH_COLUMN);
+}
+$batches = db()->query("SELECT substr(note, 5) b, COUNT(*) n FROM pass
+                        WHERE note LIKE 'srv:%' GROUP BY note ORDER BY note DESC")
+               ->fetchAll(PDO::FETCH_ASSOC);
+
 // --- 印刷ビュー（print=1: 出展者登録用紙 / print=admin: 受付スタッフ用紙） ---
 if (isset($_GET['print'])) {
-    $print_admin  = ($_GET['print'] === 'admin');
-    $print_badges = ($_GET['print'] === 'badges');
+    $print_admin = ($_GET['print'] === 'admin');
     ?><!doctype html><html lang="ja"><head><meta charset="utf-8">
-<title><?= $print_badges ? '名札' : 'ブース登録用紙' ?></title>
+<title>ブース登録用紙</title>
 <style>
 @page { size: A4 portrait; margin: 0; }
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -132,37 +156,11 @@ ol { margin:0 0 4mm 5mm; font-size:10.5pt; line-height:1.8; }
 .key b { font-family:ui-monospace,monospace; font-size:16pt; letter-spacing:0.08em; }
 .qr svg { width:30mm; height:30mm; }
 .n { font-size:8.5pt; color:#666; margin-top:4mm; }
-/* 名札（91mm×55mm・A4に2列×5段） */
-.badges { display:grid; grid-template-columns:91mm 91mm; width:182mm; margin:11mm auto; }
-.badge { width:91mm; height:55mm; border:0.2mm dashed #aaa; padding:4mm 5mm;
-         display:flex; align-items:center; gap:4mm; page-break-inside:avoid; }
-.badge .qr svg { width:24mm; height:24mm; }
-.badge .ev2 { font-size:7.5pt; color:#555; margin-bottom:1mm; }
-.badge .nm { border-bottom:0.3mm solid #999; height:11mm; margin:2mm 0 2mm; }
-.badge .cd { font-family:ui-monospace,monospace; font-size:10pt; letter-spacing:0.1em; }
 </style></head><body>
 <?php
 $base = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
       . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');   // ルート直下設置で // にならないように
-if ($print_badges):
-    $n = min(100, max(1, (int)($_GET['n'] ?? 10)));
-    $codes = [];
-    while (count($codes) < $n) $codes[pass_new()] = 1;   // 念のため重複を除く
-    $codes = array_keys($codes);
-    ?>
-<div class="badges">
-<?php foreach ($codes as $c): ?>
-<div class="badge">
-  <div class="qr" data-u="<?= $h($base . '/?n=' . $c) ?>"></div>
-  <div style="flex:1">
-    <div class="ev2"><?= $h(event_title()) ?>　<?= $h(event_date()) ?></div>
-    <div class="nm"></div>
-    <div class="cd"><?= $h($c) ?></div>
-  </div>
-</div>
-<?php endforeach; ?>
-</div>
-<?php elseif ($print_admin):
+if ($print_admin):
     $rurl = $base . '/register.php?admin=' . rawurlencode(admin_key());
     $aurl = $base . '/admin.php?admin=' . rawurlencode(admin_key());
     $copies = min(10, max(1, (int)($_GET['n'] ?? 4)));
@@ -272,15 +270,27 @@ document.querySelectorAll('.qr').forEach(function (e) {
 <td><?= $k['name'] !== null ? $h($k['name']) : '—' ?></td></tr>
 <?php endforeach; ?></table>
 
-<h2>名札QRの発行</h2>
-<form method="get" target="_blank">
-  <input type="hidden" name="print" value="badges">
-  <input type="number" name="n" min="1" max="100" value="10"> 枚
-  <button>名札を印刷</button>
+<h2>名札QRの発行（サーバ発行）</h2>
+<form method="post">
+  <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
+  <input type="number" name="n" min="1" max="100" value="10"> 件
+  <button name="act" value="issue">発行する</button>
 </form>
-<p class="st">コードはその場で採番し、サーバは控えを持ちません（開き直すたびに別のコードになります）。
-名札の形式が正しいかの検証だけを行うので、追加発行はいつでもできます。
-ラリーへの参加には受付での参加登録が別に必要です。</p>
+<p class="st">発行したコードは<b>その場で参加登録済み</b>になります（受付での登録は不要）。
+QRのPNGは下の発行分一覧からいつでもダウンロードでき、名札などお好みのレイアウトに埋め込めます。
+名簿側（外部ツール）で同じ規則のコードを発行した場合は未登録のままなので、受付で参加登録してください。</p>
+<?php if ($batches): ?>
+<table><tr><th>発行日時</th><th>件数</th><th></th></tr>
+<?php foreach ($batches as $b): ?>
+<tr><td class="mono"><?= $h($b['b']) ?></td><td><?= (int)$b['n'] ?></td>
+<td><a href="?batch=<?= $h($b['b']) ?>">QRを表示</a></td></tr>
+<?php endforeach; ?></table>
+<?php endif; ?>
+<?php if ($bcodes): ?>
+<p class="st" style="margin-top:10px">発行分 <span class="mono"><?= $h($batch) ?></span>（<?= count($bcodes) ?>件）
+　<button type="button" id="zipBtn">PNGをまとめてZIPでダウンロード</button></p>
+<div id="qrs" style="display:grid;grid-template-columns:repeat(auto-fill,128px);gap:10px;margin-top:8px"></div>
+<?php endif; ?>
 
 <h2>バックアップ</h2>
 <p class="st"><a href="?backup=1">DBの控えをダウンロード</a>（初期化や年次の切り替えの前に取っておく）</p>
@@ -319,3 +329,80 @@ document.querySelectorAll('.qr').forEach(function (e) {
 (function(){ var q=qrcode(0,'M'); q.addData(<?= json_encode($aurl) ?>); q.make();
   document.getElementById('aqrimg').innerHTML=q.createImgTag(4,8); })();
 </script>
+<?php if ($bcodes):
+    $purl = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
+          . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/?n='; ?>
+<script>
+// 発行分のQRをcanvasに描いてPNGにする（1枚ずつの保存と、ZIPでの一括保存）
+(function () {
+  var CODES = <?= json_encode($bcodes) ?>, PURL = <?= json_encode($purl) ?>;
+
+  function qrCanvas(u) {
+    var q = qrcode(0, 'M'); q.addData(u); q.make();
+    var n = q.getModuleCount(), s = 8, m = 4, size = (n + 2 * m) * s;
+    var cv = document.createElement('canvas'); cv.width = cv.height = size;
+    var cx = cv.getContext('2d');
+    cx.fillStyle = '#fff'; cx.fillRect(0, 0, size, size);
+    cx.fillStyle = '#000';
+    for (var r = 0; r < n; r++) for (var c = 0; c < n; c++)
+      if (q.isDark(r, c)) cx.fillRect((c + m) * s, (r + m) * s, s, s);
+    return cv;
+  }
+
+  var pngs = {};   // コード => dataURL
+  var grid = document.getElementById('qrs');
+  CODES.forEach(function (code) {
+    var cv = qrCanvas(PURL + code), url = cv.toDataURL('image/png');
+    pngs[code] = url;
+    var d = document.createElement('div');
+    d.style.cssText = 'text-align:center;font-size:12px';
+    var a = document.createElement('a');
+    a.href = url; a.download = code + '.png';
+    cv.style.width = '112px'; cv.style.height = '112px'; cv.style.border = '1px solid #ddd';
+    a.appendChild(cv);
+    d.appendChild(a);
+    d.insertAdjacentHTML('beforeend', '<br><span class="mono">' + code + '</span> <a href="'
+      + url + '" download="' + code + '.png">PNG</a>');
+    grid.appendChild(d);
+  });
+
+  // ZIP（無圧縮・store方式）を自前で組み立てる。ライブラリは持ち込まない
+  var CT = (function () { var t = [], c; for (var i = 0; i < 256; i++) {
+    c = i; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[i] = c >>> 0;
+  } return t; })();
+  function crc32(u) { var c = 0xFFFFFFFF;
+    for (var i = 0; i < u.length; i++) c = CT[(c ^ u[i]) & 255] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0; }
+  function bytes(dataURL) { var b = atob(dataURL.split(',')[1]), u = new Uint8Array(b.length);
+    for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+
+  document.getElementById('zipBtn').addEventListener('click', function () {
+    var parts = [], cd = [], off = 0, count = 0;
+    CODES.forEach(function (code) {
+      var name = new TextEncoder().encode(code + '.png'), d = bytes(pngs[code]), crc = crc32(d);
+      var lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true);
+      lh.setUint32(14, crc, true); lh.setUint32(18, d.length, true); lh.setUint32(22, d.length, true);
+      lh.setUint16(26, name.length, true);
+      parts.push(lh.buffer, name, d);
+      var ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true);
+      ch.setUint32(16, crc, true); ch.setUint32(20, d.length, true); ch.setUint32(24, d.length, true);
+      ch.setUint16(28, name.length, true); ch.setUint32(42, off, true);
+      cd.push(ch.buffer, name);
+      off += 30 + name.length + d.length; count++;
+    });
+    var cdLen = 0; cd.forEach(function (x) { cdLen += x.byteLength; });
+    var e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, count, true); e.setUint16(10, count, true);
+    e.setUint32(12, cdLen, true); e.setUint32(16, off, true);
+    var blob = new Blob(parts.concat(cd, [e.buffer]), { type: 'application/zip' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'qr_<?= $h($batch) ?>.zip';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+  });
+})();
+</script>
+<?php endif; ?>

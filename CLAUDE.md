@@ -54,7 +54,7 @@ docker run -d -p 8080:80 \
 | `web/booth.php` | ブースの読み取り画面（`?b=トークン&key=鍵`。応答は必ず JSON で返す） |
 | `web/admin.php` | 受付（参加登録・抽選判定。`?admin=鍵`） |
 | `web/register.php` | 参加登録専用の画面 |
-| `web/manage.php` | 管理コンソール（Basic 認証。イベント名・特典条件の設定、登録キーと名札QRの発行・印刷、DBのバックアップ・初期化） |
+| `web/manage.php` | 管理コンソール（Basic 認証。イベント名・特典条件の設定、登録キーの発行・印刷、名札QRの発行（PNG配布・参加登録込み）、DBのバックアップ・初期化） |
 | `web/export.php` | 集計（`?admin=鍵`） |
 | `web/status.php` | 進捗 JSON API |
 | `web/lib/config.php` | 設定・鍵まわり（`pass_ok()`・`booth_ok()`・`admin_ok()`・`needs()` など） |
@@ -66,9 +66,10 @@ docker run -d -p 8080:80 \
 - **DB（SQLite）は公開領域の外に置く**。`db_path()` は置き場所に `.htaccess`（Deny from all）も書く。
   `*.sqlite` と `web/lib/secret.php` は .gitignore 済み
 - **名札コードは6文字＝5文字＋チェックサム1桁**（紛らわしい字を除いた32文字 `PASS_ALPH`）。
-  発行は manage.php の名札印刷（`pass_new()`）で、**サーバは発行済みコードの控えを持たず、
-  `pass_ok()` の検証だけ**を行う（名簿側の外部ツールで発行しても同じ規則なら通る）。
-  ただし参加には受付での「参加登録」（`pass` テーブル）が別に要る
+  発行経路は2つ。**サーバ発行**（manage.php の act=issue）は採番と同時に参加登録し
+  （`pass.note` に `srv:バッチ` を記録）、QR を PNG／ZIP で配布する。
+  **名簿側（外部ツール）発行**は同じ規則なら `pass_ok()` を通るが未登録のままなので、
+  受付での「参加登録」（`pass` テーブル）が別に要る
 - 鍵の持ち方: コードに残る秘密は `secret.php`（manage.php の Basic 認証）だけ。
   受付の鍵は DB 保存（manage.php で表示・再発行）、ブースの鍵は enroll 時に DB へ発行。
   照合はすべて `hash_equals()`

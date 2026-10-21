@@ -68,11 +68,12 @@ WAL モード・busy_timeout 5000ms。
 
 - 字母は紛らわしい字（0/O/1/I）を除いた32文字 `PASS_ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'`
 - 検査文字 = `ALPH[ Σ_{i=0..4} (i+1)×idx(c_i) mod 32 ]`
-- **サーバは発行済みコードの控えを持たない**。`pass_ok()` の形式検証のみ行う。
-  発行は `pass_new()`（manage.php の名札印刷）だが、名簿側の外部ツールで
-  同じ規則で発行しても通る
-- ただし参加には受付での「参加登録」（`pass` テーブルへの insert）が別に必要。
-  形式が正しいだけの未登録コードはブースで弾かれる
+- 発行経路は2つ。**サーバ発行**（manage.php の `act=issue`）は `pass_new()` で採番すると同時に
+  `pass` テーブルへ登録する（`note` に `srv:発行日時` を記録。QR は PNG／ZIP で配布し、
+  `?batch=` でいつでも再表示できる）。**名簿側（外部ツール）発行**は同じ規則なら
+  `pass_ok()` の形式検証を通るが未登録のままで、受付での「参加登録」が別に必要
+- 参加登録（`pass` への insert）が参加の関門。チェックサム規則は公開アルゴリズムなので
+  形式が正しいだけのコードは誰でも作れるが、未登録コードはブースで弾かれる
 
 ### 鍵の持ち方
 
@@ -155,8 +156,8 @@ Docker を使わない場合は `php -S localhost:8080 -t web` でも動くが�
 
 ```
 manage.php  : ekey 発行 ──→ enroll.php : booth 行を作成（token/key/enroll_key）
-manage.php  : pass_new() で名札印刷（DBには何も残らない）
-register.php→ admin.php?api=register : pass 行を作成（参加登録）
+manage.php  : act=issue で pass_new()×N を pass に登録（QRはPNG/ZIPで配布）
+（名簿発行分のみ）register.php→ admin.php?api=register : pass 行を作成（参加登録）
 booth.php?scan=1 : pass_ok + pass_registered を確認して scan に insert（重複は insert しない）
 index.html → status.php : scan を集計して進捗 JSON
 admin.php   : needs() と draw の件数を比べ、条件を満たせば draw に insert（特典N）
