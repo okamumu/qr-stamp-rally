@@ -1,0 +1,7 @@
+.DS_Store
+# 管理コンソールのID・パスワード（secret.example.php から作る）
+web/lib/secret.php
+# データ（個人情報）。DB は公開領域の外に置く
+*.sqlite
+*.sqlite-*
+backup_*.sqlite
