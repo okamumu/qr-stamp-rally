@@ -79,13 +79,13 @@ function enroll_keys() {
 /**
  * SQLite の置き場所。
  *
- * 既定は「このファイルの4つ上の rentai_stamp/」（さくらのレンタルサーバで
+ * 既定は「このファイルの4つ上の qr_stamp_rally/」（さくらのレンタルサーバで
  * ~/www/<ドメイン>/stamp/lib/ に置いた場合にホーム直下＝公開領域の外になる深さ）。
  * 他の環境では環境変数 STAMP_DB_DIR で明示するのが確実。
  */
 function db_path() {
     $dir = getenv('STAMP_DB_DIR');            // テスト時に差し替えられるように
-    if (!$dir) $dir = dirname(__DIR__, 4) . '/rentai_stamp';
+    if (!$dir) $dir = dirname(__DIR__, 4) . '/qr_stamp_rally';
     if (!is_dir($dir)) {
         @mkdir($dir, 0700, true);
         // 万一この場所が公開領域に入ってしまっても読まれないように

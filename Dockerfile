@@ -1,9 +1,9 @@
 # スタンプラリー（PHP 7.4 + SQLite）
 #
-#   docker build -t rentai-stamp .
+#   docker build -t qr-stamp-rally .
 #   docker run -d -p 8080:80 \
 #     -v "$PWD/web/lib/secret.php:/var/www/html/lib/secret.php:ro" \
-#     -v stamp-data:/data rentai-stamp
+#     -v stamp-data:/data qr-stamp-rally
 #
 # secret.php（manage.php の Basic 認証）はイメージに入れない。
 # 実行時にマウントする（secret.example.php からの作り方はそちらを参照）。
