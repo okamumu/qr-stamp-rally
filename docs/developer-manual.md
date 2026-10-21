@@ -80,7 +80,7 @@ WAL モード・busy_timeout 5000ms。
 | 鍵 | 置き場所 | 発行・再発行 |
 |---|---|---|
 | manage.php の Basic 認証 | `lib/secret.php`（コード中で唯一の秘密） | 手動（`password_hash()` で作る） |
-| 受付の鍵（reward.php / register.php / export.php の `?admin=`） | DB（setting.admin_key） | manage.php で表示・再発行 |
+| 運営の鍵（reward.php / register.php / export.php の `?admin=`） | DB（setting.admin_key） | manage.php で表示・再発行 |
 | ブースの鍵（booth.php の `?key=`） | DB（booth.key）。enroll 時に発行 | 再発行の仕組みは無い（下記） |
 | 出展者登録キー（ekey） | DB | manage.php のみ。**ファイルからの seed はしない**（「すべて初期化」後に旧キーが復活しないように） |
 

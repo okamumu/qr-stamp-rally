@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     } elseif ($act === 'adminkey' && ($_POST['sure'] ?? '') === 'yes') {
         admin_key_rotate();
-        $msg = '受付の鍵を再発行しました（古いURL・QRは無効になります）';
+        $msg = '運営の鍵を再発行しました（古いURL・QRは無効になります）';
     } elseif ($act === 'issue') {
         // 名札QRのサーバ発行。採番と同時に参加登録する（受付での登録は不要）。
         // 名簿側（外部ツール）で発行したコードは未登録のままなので従来どおり受付で登録する
@@ -306,28 +306,37 @@ QRのPNGは下の発行分一覧からいつでもダウンロードでき、名
   <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
   <button class="warn" name="act" value="reset_all">すべて初期化（年次の切り替え用）</button>
 </form>
-<h2>受付の鍵（reward.php・export.php 用）</h2>
-<?php $aurl = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
-            . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/reward.php?admin=' . rawurlencode(admin_key()); ?>
+<h2>運営の鍵（register.php・reward.php・export.php 用）</h2>
+<?php $obase = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
+             . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');
+      $rurl = $obase . '/register.php?admin=' . rawurlencode(admin_key());
+      $aurl = $obase . '/reward.php?admin=' . rawurlencode(admin_key()); ?>
 <p class="st mono"><?= $h(admin_key()) ?></p>
 <p class="st">参加登録（受付係） <a href="register.php?admin=<?= $h(admin_key()) ?>">register.php</a>／
 特典窓口（照会・受け渡し） <a href="reward.php?admin=<?= $h(admin_key()) ?>">reward.php</a>／
 集計 <a href="export.php?admin=<?= $h(admin_key()) ?>">export.php</a>／
-<a href="#" onclick="document.getElementById('aqr').hidden=!document.getElementById('aqr').hidden;return false">受付用QRを表示</a>／
+<a href="#" onclick="document.getElementById('aqr').hidden=!document.getElementById('aqr').hidden;return false">運営画面のQRを表示</a>／
 <a href="?print=admin" target="_blank">受付スタッフ用紙を印刷</a>（4枚。枚数は ?print=admin&n=6 のように）</p>
 <div id="aqr" hidden>
-  <div id="aqrimg"></div>
-  <p class="st">運営端末でこのQRを読むと受付画面が開く。**鍵入りなので掲示しない**こと</p>
+  <div style="display:flex;gap:24px;flex-wrap:wrap">
+    <div style="text-align:center"><div id="rqrimg"></div><b style="font-size:13px">参加登録（register.php）</b></div>
+    <div style="text-align:center"><div id="aqrimg"></div><b style="font-size:13px">特典窓口（reward.php）</b></div>
+  </div>
+  <p class="st">運営端末でQRを読むと各画面が開く。**鍵入りなので掲示しない**こと</p>
 </div>
-<form method="post" onsubmit="return confirm('受付の鍵を再発行します。配布済みの受付QR・URLは使えなくなります。よろしいですか？')">
+<form method="post" onsubmit="return confirm('運営の鍵を再発行します。配布済みの受付QR・URLは使えなくなります。よろしいですか？')">
   <input type="hidden" name="sure" value="yes">
   <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
-  <button class="warn" name="act" value="adminkey">受付の鍵を再発行</button>
+  <button class="warn" name="act" value="adminkey">運営の鍵を再発行</button>
 </form>
 <script src="qrgen.js"></script>
 <script>
-(function(){ var q=qrcode(0,'M'); q.addData(<?= json_encode($aurl) ?>); q.make();
-  document.getElementById('aqrimg').innerHTML=q.createImgTag(4,8); })();
+(function(){
+  [[<?= json_encode($rurl) ?>, 'rqrimg'], [<?= json_encode($aurl) ?>, 'aqrimg']].forEach(function (x) {
+    var q = qrcode(0, 'M'); q.addData(x[0]); q.make();
+    document.getElementById(x[1]).innerHTML = q.createImgTag(4, 8);
+  });
+})();
 </script>
 <?php if ($bcodes):
     $purl = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']

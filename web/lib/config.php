@@ -46,7 +46,7 @@ function setting_s($k, $default) {
 function event_title() { return setting_s('ev_title', EVENT_TITLE); }
 function event_date()  { return setting_s('ev_date',  EVENT_DATE); }
 
-/** 受付の鍵（DB保存。無ければ生成する。再発行は manage.php） */
+/** 運営の鍵（register/reward/export 共通。DB保存。無ければ生成する。再発行は manage.php） */
 function admin_key() {
     $k = setting_s('admin_key', '');
     if ($k === '') $k = admin_key_rotate();

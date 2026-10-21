@@ -72,7 +72,7 @@ docker run -d -p 8080:80 \
   **名簿側（外部ツール）発行**は同じ規則なら `pass_ok()` を通るが未登録のままなので、
   受付での「参加登録」（`pass` テーブル）が別に要る
 - 鍵の持ち方: コードに残る秘密は `secret.php`（manage.php の Basic 認証）だけ。
-  受付の鍵は DB 保存（manage.php で表示・再発行）、ブースの鍵は enroll 時に DB へ発行。
+  運営の鍵は DB 保存（manage.php で表示・再発行）、ブースの鍵は enroll 時に DB へ発行。
   照合はすべて `hash_equals()`
 - **ブース用QRは booth.php への鍵つきURL**なので、一度配ったトークンと鍵は変えないこと
 - イベント名・開催日・必要ブース数は manage.php から `setting` テーブルに保存する。
