@@ -40,7 +40,7 @@ if (isset($_GET['scan'])) {
         }
         if (!pass_registered($code)) {
             echo json_encode(['ok' => false,
-                'msg' => '未登録です。先に総合受付で参加登録をお願いします']); exit;
+                'msg' => '未登録です。先に受付で参加登録をお願いします']); exit;
         }
         $before = got_of($code);
         $dup    = in_array($token, $before, true);
@@ -123,7 +123,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
     <li>次の参加者には、もう一度「次の参加者を読み取る」を押してください</li>
   </ol>
   <p style="font-size:13px;color:#777;margin-top:8px">
-    うまく読めないときは、参加者に総合受付へお越しいただくようお伝えください。</p>
+    うまく読めないときは、参加者に受付へお越しいただくようお伝えください。</p>
 </div>
 
 <script src="jsQR.js"></script>
@@ -184,7 +184,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
       stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'environment', width: { ideal: 1280 } }, audio: false });
     } catch (e) {
-      show('ng', 'カメラを使えません', e.name + '　総合受付にお知らせください');
+      show('ng', 'カメラを使えません', e.name + '　受付にお知らせください');
       startBtn.hidden = false; stopBtn.hidden = true; v.hidden = true; return;
     }
     v.srcObject = stream; await v.play();

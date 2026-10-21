@@ -10,6 +10,7 @@ $fmt = isset($_GET['csv']) ? $_GET['csv'] : '';
 /** ブースごとの来訪者数（同じ人の重複は数えない） */
 $visit = db()->query('SELECT booth, COUNT(DISTINCT code) n FROM scan
                       WHERE booth <> "start" GROUP BY booth')->fetchAll(PDO::FETCH_KEY_PAIR);
+$regist  = (int)db()->query('SELECT COUNT(*) FROM pass')->fetchColumn();
 $total   = (int)db()->query('SELECT COUNT(DISTINCT code) FROM scan')->fetchColumn();
 $reached = (int)db()->query('SELECT COUNT(*) FROM (SELECT code FROM scan WHERE booth <> "start"
                              GROUP BY code HAVING COUNT(DISTINCT booth) >= ' . need1() . ')')->fetchColumn();
@@ -62,7 +63,8 @@ $k = urlencode(admin_key());
 </style>
 <h2>スタンプラリー　集計</h2>
 <div class="sum">
-  <div><b><?= $total ?></b>参加者</div>
+  <div><b><?= $regist ?></b>参加登録</div>
+  <div><b><?= $total ?></b>ブースを回った人</div>
   <div><b><?= $reached ?></b><?= need1() ?>ブース達成</div>
   <div><b><?= $drawn ?></b>特典受取</div></div>
 <table>

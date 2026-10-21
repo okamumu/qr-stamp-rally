@@ -76,7 +76,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
       const r = await fetch('admin.php?admin=' + encodeURIComponent(KEY)
                             + '&api=register&n=' + encodeURIComponent(code));
       const d = await r.json();
-      if (!d.ok)            show('ng', code + '：この名札は無効です', '形式が違います。総合受付の責任者へ');
+      if (!d.ok)            show('ng', code + '：この名札は無効です', '形式が違います。受付の責任者へ');
       else if (d.already)   show('dup', code + '：登録済みです', 'そのままお通しください');
       else { cnt++; cntEl.textContent = cnt; show('ok', code + '：登録しました', '次の方のQRを読んでください'); }
     } catch (e) {

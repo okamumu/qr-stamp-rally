@@ -203,7 +203,7 @@ foreach ($unused as $k): ?>
 <div class="qr" data-u="<?= $h($eurl) ?>"></div>
 </div>
 <p class="n">※同じキーでもう一度開くと、発行済みの画面を再表示できます。
-お困りの際は総合受付までお知らせください。</p>
+お困りの際は受付までお知らせください。</p>
 </div>
 <?php endforeach; endif; ?>
 <script src="qrgen.js"></script>

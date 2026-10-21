@@ -54,7 +54,7 @@
   <ol>
     <li>ブースで<b>展示のご説明を聞いてください</b></li>
     <li>ブースの方が<b>あなたの名札のQRを読み取ります</b>（スマートフォンは不要です）</li>
-    <li>規定数のブースを回ったら総合受付へ。<b>その場で特典</b>を受け取れます<br>
+    <li>規定数のブースを回ったら受付へ。<b>その場で特典</b>を受け取れます<br>
         <span id="needtxt" style="font-size:13px;color:#666"></span></li>
   </ol>
   <p style="margin-top:8px;color:#888;font-size:13px">
@@ -63,7 +63,7 @@
 </div>
 
 <p class="foot">
-  うまくいかないときは総合受付にお声がけください。<br>
+  うまくいかないときは受付にお声がけください。<br>
   <span id="mycode" class="code"></span>
 </p>
 
@@ -87,7 +87,7 @@ function render(d) {
     goal = '<div class="goal off">あと' + (needs[0] - n) + 'ブースで特典1です</div>';
   } else {
     goal = '<div class="goal ' + (k >= needs.length ? 'on2' : 'on') + '">特典'
-         + (needs.length > 1 ? k + 'まで' : 'を') + '達成！<br>総合受付で<b>特典</b>を受け取れます';
+         + (needs.length > 1 ? k + 'まで' : 'を') + '達成！<br>受付で<b>特典</b>を受け取れます';
     if (k < needs.length) {
       goal += '<div style="font-weight:400;font-size:14px;margin-top:6px">'
             + 'あと' + (needs[k] - n) + 'ブースで特典' + (k + 1) + 'です</div>';
@@ -133,8 +133,8 @@ if (q.has('b')) {
     .then(function (d) {
       if (d.event) { var ev=document.getElementById('evttl'); if (ev) ev.textContent = d.event + (d.date ? '　' + d.date : ''); }
       if (!d.ok) {
-        app.innerHTML = msg('ng', d.unregistered ? 'まだ参加登録されていません。総合受付で名札を見せて参加登録してください' : d.unknown ? 'この名札は無効です' : '読み取れませんでした')
-          + card('<p style="font-size:15px;color:#555">総合受付にお声がけください。</p>');
+        app.innerHTML = msg('ng', d.unregistered ? 'まだ参加登録されていません。受付で名札を見せて参加登録してください' : d.unknown ? 'この名札は無効です' : '読み取れませんでした')
+          + card('<p style="font-size:15px;color:#555">受付にお声がけください。</p>');
         return;
       }
       render(d);
