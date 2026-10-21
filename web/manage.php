@@ -143,7 +143,7 @@ ol { margin:0 0 4mm 5mm; font-size:10.5pt; line-height:1.8; }
 </style></head><body>
 <?php
 $base = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
-      . dirname($_SERVER['SCRIPT_NAME']);
+      . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');   // ルート直下設置で // にならないように
 if ($print_badges):
     $n = min(100, max(1, (int)($_GET['n'] ?? 10)));
     $codes = [];
@@ -298,7 +298,7 @@ document.querySelectorAll('.qr').forEach(function (e) {
 </form>
 <h2>受付の鍵（admin.php・export.php 用）</h2>
 <?php $aurl = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
-            . dirname($_SERVER['SCRIPT_NAME']) . '/admin.php?admin=' . rawurlencode(admin_key()); ?>
+            . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/admin.php?admin=' . rawurlencode(admin_key()); ?>
 <p class="st mono"><?= $h(admin_key()) ?></p>
 <p class="st">参加登録（受付係） <a href="register.php?admin=<?= $h(admin_key()) ?>">register.php</a>／
 特典窓口（照会・受け渡し） <a href="admin.php?admin=<?= $h(admin_key()) ?>">admin.php</a>／

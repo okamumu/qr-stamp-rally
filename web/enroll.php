@@ -58,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $url = $booth
     ? (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
-      . dirname($_SERVER['SCRIPT_NAME']) . '/booth.php?b=' . rawurlencode($booth['token'])
+      . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/booth.php?b=' . rawurlencode($booth['token'])
       . '&key=' . rawurlencode($booth['key'])
     : '';
 ?><!doctype html>
