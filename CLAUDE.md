@@ -61,6 +61,7 @@ docker run -d -p 8080:80 \
 | `web/lib/config.php` | 設定・鍵まわり（`pass_ok()`・`booth_ok()`・`admin_ok()`・`needs()` など） |
 | `web/lib/db.php` | DB 接続とスキーマ（`db()` が CREATE TABLE まで行う。マイグレーションは無い） |
 | `web/jsQR.js` / `web/qrgen.js` | QR の読み取り／生成（バンドル） |
+| `tools/local_qr.html` | 名札QRのローカル発行（サーバ不要。採番規則は config.php と同じ＝変えるときは両方そろえる） |
 
 ## 設計上の約束ごと
 

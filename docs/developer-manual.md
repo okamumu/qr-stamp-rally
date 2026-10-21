@@ -33,6 +33,7 @@ PHP ＋ SQLite（PDO）。7.4 でも動く書き方を守る（レンタルサ�
 | `web/lib/secret.php` | manage.php の Basic 認証（git管理外。`secret.example.php` からコピー） |
 | `web/jsQR.js` / `web/qrgen.js` | QR 読み取り／生成のバンドル（手を入れない） |
 | `tests/` | 素の Node スクリプトによるテスト |
+| `tools/local_qr.html` | 名札QRのローカル発行（ブラウザで開くだけ。採番規則は config.php と同じ＝**変えるときは両方そろえる**。発行分は未登録） |
 
 ## 3. データベース
 

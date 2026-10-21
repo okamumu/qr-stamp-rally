@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ja">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>名札QRのローカル発行</title>
+<!--
+  名札QRのローカル（名簿側）発行ツール。
+  このファイルをブラウザで開くだけで動く（サーバ不要・オフライン可）。
+  manage.php のサーバ発行と同じ規則（5文字＋チェックサム1桁）で採番するが、
+  **サーバには登録されない**ので、参加には受付での参加登録（register.php か登録API）が要る。
+  QRの中身は「ベースURL + ?n=コード」（参加者ページ）。ベースURLは本番の設置先を入れること。
+-->
+<style>
+ body{font-family:"Hiragino Sans",sans-serif;padding:18px;line-height:1.7;max-width:720px;margin:0 auto}
+ h1{font-size:17px;color:#1f4e9c;margin-bottom:8px}
+ .st{color:#555;font-size:13px}
+ label{display:block;margin:8px 0 2px;font-size:14px}
+ input{font:inherit;padding:8px;border:1px solid #ccc;border-radius:8px;box-sizing:border-box}
+ #base{width:100%}
+ button{font:inherit;padding:10px 16px;border-radius:8px;border:0;background:#1f4e9c;color:#fff;font-weight:700;margin:10px 8px 0 0}
+ #qrs{display:grid;grid-template-columns:repeat(auto-fill,128px);gap:10px;margin-top:14px}
+ #qrs div{text-align:center;font-size:12px}
+ .mono{font-family:ui-monospace,monospace}
+ canvas{width:112px;height:112px;border:1px solid #ddd}
+</style>
+<h1>名札QRのローカル発行（名簿側・サーバ未登録）</h1>
+<p class="st">ここで発行したコードはサーバに登録されません。参加者が使う前に、
+受付（register.php）または登録API（reward.php?admin=鍵&amp;api=register&amp;n=コード）で参加登録してください。</p>
+<label>サーバのベースURL（参加者ページの場所。末尾の / は不要）
+  <input id="base" value="https://example.org/stamp" spellcheck="false"></label>
+<label>件数 <input id="n" type="number" min="1" max="500" value="10" style="width:6em"></label>
+<button type="button" id="gen">発行する</button>
+<button type="button" id="zip" hidden>PNGをまとめてZIPでダウンロード</button>
+<button type="button" id="csv" hidden>コード一覧CSV（名簿用）</button>
+<div id="qrs"></div>
+<script src="../web/qrgen.js"></script>
+<script>
+(function () {
+  // web/lib/config.php の pass_new()/pass_ok() と同じ規則（変えるときは両方そろえる）
+  var ALPH = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  function passNew() {
+    var c = '', s = 0, u = new Uint32Array(5);
+    crypto.getRandomValues(u);
+    for (var i = 0; i < 5; i++) c += ALPH[u[i] % 32];
+    for (var i = 0; i < 5; i++) s += (i + 1) * ALPH.indexOf(c[i]);
+    return c + ALPH[s % 32];
+  }
+
+  function qrCanvas(u) {
+    var q = qrcode(0, 'M'); q.addData(u); q.make();
+    var n = q.getModuleCount(), s = 8, m = 4, size = (n + 2 * m) * s;
+    var cv = document.createElement('canvas'); cv.width = cv.height = size;
+    var cx = cv.getContext('2d');
+    cx.fillStyle = '#fff'; cx.fillRect(0, 0, size, size);
+    cx.fillStyle = '#000';
+    for (var r = 0; r < n; r++) for (var c = 0; c < n; c++)
+      if (q.isDark(r, c)) cx.fillRect((c + m) * s, (r + m) * s, s, s);
+    return cv;
+  }
+
+  var codes = [], pngs = {};
+  var grid = document.getElementById('qrs');
+
+  document.getElementById('gen').addEventListener('click', function () {
+    var base = document.getElementById('base').value.replace(/\/+$/, '');
+    var n = Math.min(500, Math.max(1, parseInt(document.getElementById('n').value, 10) || 1));
+    codes = []; pngs = {}; grid.innerHTML = '';
+    var seen = {};
+    while (codes.length < n) { var c = passNew(); if (!seen[c]) { seen[c] = 1; codes.push(c); } }
+    codes.forEach(function (code) {
+      var cv = qrCanvas(base + '/?n=' + code), url = cv.toDataURL('image/png');
+      pngs[code] = url;
+      var d = document.createElement('div');
+      var a = document.createElement('a');
+      a.href = url; a.download = code + '.png'; a.appendChild(cv);
+      d.appendChild(a);
+      d.insertAdjacentHTML('beforeend', '<br><span class="mono">' + code + '</span> <a href="'
+        + url + '" download="' + code + '.png">PNG</a>');
+      grid.appendChild(d);
+    });
+    document.getElementById('zip').hidden = false;
+    document.getElementById('csv').hidden = false;
+  });
+
+  function save(blob, name) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name; a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 10000);
+  }
+
+  document.getElementById('csv').addEventListener('click', function () {
+    var csv = '﻿コード\n' + codes.join('\n') + '\n';
+    save(new Blob([csv], { type: 'text/csv' }), 'codes_' + stamp() + '.csv');
+  });
+
+  function stamp() {
+    var d = new Date(), p = function (x) { return (x < 10 ? '0' : '') + x; };
+    return d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '_' + p(d.getHours()) + p(d.getMinutes());
+  }
+
+  // ZIP（無圧縮・store方式）。manage.php の一括ダウンロードと同じ組み立て
+  var CT = (function () { var t = [], c; for (var i = 0; i < 256; i++) {
+    c = i; for (var k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[i] = c >>> 0;
+  } return t; })();
+  function crc32(u) { var c = 0xFFFFFFFF;
+    for (var i = 0; i < u.length; i++) c = CT[(c ^ u[i]) & 255] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0; }
+  function bytes(dataURL) { var b = atob(dataURL.split(',')[1]), u = new Uint8Array(b.length);
+    for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
+
+  document.getElementById('zip').addEventListener('click', function () {
+    var parts = [], cd = [], off = 0, count = 0;
+    codes.forEach(function (code) {
+      var name = new TextEncoder().encode(code + '.png'), d = bytes(pngs[code]), crc = crc32(d);
+      var lh = new DataView(new ArrayBuffer(30));
+      lh.setUint32(0, 0x04034b50, true); lh.setUint16(4, 20, true);
+      lh.setUint32(14, crc, true); lh.setUint32(18, d.length, true); lh.setUint32(22, d.length, true);
+      lh.setUint16(26, name.length, true);
+      parts.push(lh.buffer, name, d);
+      var ch = new DataView(new ArrayBuffer(46));
+      ch.setUint32(0, 0x02014b50, true); ch.setUint16(4, 20, true); ch.setUint16(6, 20, true);
+      ch.setUint32(16, crc, true); ch.setUint32(20, d.length, true); ch.setUint32(24, d.length, true);
+      ch.setUint16(28, name.length, true); ch.setUint32(42, off, true);
+      cd.push(ch.buffer, name);
+      off += 30 + name.length + d.length; count++;
+    });
+    var cdLen = 0; cd.forEach(function (x) { cdLen += x.byteLength; });
+    var e = new DataView(new ArrayBuffer(22));
+    e.setUint32(0, 0x06054b50, true); e.setUint16(8, count, true); e.setUint16(10, count, true);
+    e.setUint32(12, cdLen, true); e.setUint32(16, off, true);
+    save(new Blob(parts.concat(cd, [e.buffer]), { type: 'application/zip' }), 'qr_local_' + stamp() + '.zip');
+  });
+})();
+</script>
