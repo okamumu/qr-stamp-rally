@@ -18,21 +18,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```sh
 node tests/test_pick.js   # admin.php の pick()（QRの中身から名札コードを抽出）を切り出して検証
-node tests/test_page.js   # index.html のスクリプトを Node で回して表示の分岐を確認
+node tests/test_page.js   # index.html のスクリプトを fetch モックで回して表示の分岐を確認
 ```
 
 テストランナーは使わず、各ファイルが素の Node スクリプト（合格数を表示し、NG があれば exit 1）。
-`test_pick.js` は PHP ソースから、`test_page.js` は HTML から、正規表現で対象関数を切り出して回す
-——**対象の関数シグネチャや周辺構造を変えるとテストの切り出しが壊れる**ので、変更時はテストもそろえて直す。
-現状 `test_pick.js` は合格、`test_page.js` は不合格（文言・挙動の変更に追従していない）。
+`test_pick.js` は PHP ソースから正規表現で関数を切り出し、`test_page.js` は HTML の `<script>` を
+切り出して fetch（status.php）をモックして回す——**対象の構造や文言を変えるとテストが壊れる**ので、
+変更時はテストもそろえて直す。
 
 ## ローカルで動かす
 
 PHP 7.4 を想定した書き方（レンタルサーバ向け）。動かす前に:
 
-1. `web/.htaccess` が `Deny from all`（停止用）なので外す
-2. `web/lib/secret.php` を `secret.example.php` からコピーして作る（manage.php の Basic 認証。git に入れない）
-3. DB の置き場所を環境変数 `STAMP_DB_DIR` で指定する（未指定だと `lib/` の4つ上の `rentai_stamp/`
+1. `web/lib/secret.php` を `secret.example.php` からコピーして作る（manage.php の Basic 認証。git に入れない）
+2. DB の置き場所を環境変数 `STAMP_DB_DIR` で指定する（未指定だと `lib/` の4つ上の `rentai_stamp/`
    ——さくらのレンタルサーバでホーム直下＝公開領域の外になる深さ）
 
 カメラがなくても `booth.php?b=トークン&key=鍵&scan=1&n=コード` を直接叩けば読み取りを記録できる。
