@@ -57,7 +57,6 @@ docker run -d -p 8080:80 \
 | `web/manage.php` | 管理コンソール（Basic 認証。イベント名・特典条件の設定、登録キーと名札QRの発行・印刷、DBのバックアップ・初期化） |
 | `web/export.php` | 集計（`?admin=鍵`） |
 | `web/status.php` | 進捗 JSON API |
-| `web/log.php` | 旧方式（参加者が出展者QRを読む）の受け口。使っていない |
 | `web/lib/config.php` | 設定・鍵まわり（`pass_ok()`・`booth_ok()`・`admin_ok()`・`needs()` など） |
 | `web/lib/db.php` | DB 接続とスキーマ（`db()` が CREATE TABLE まで行う。マイグレーションは無い） |
 | `web/jsQR.js` / `web/qrgen.js` | QR の読み取り／生成（バンドル） |

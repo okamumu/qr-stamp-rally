@@ -25,6 +25,12 @@ if (!hash_equals(MANAGE_USER, $u) || !password_verify($p, MANAGE_PASS_HASH)) {
 $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); };
 $msg = '';
 
+// CSRF対策。Basic認証はブラウザが自動送信するので、外部サイトからの
+// 自動POST（初期化・鍵再発行など）を防ぐためにセッションのトークンを照合する
+session_start();
+if (empty($_SESSION['csrf'])) $_SESSION['csrf'] = bin2hex(random_bytes(16));
+$csrf = $_SESSION['csrf'];
+
 // --- DBの控えのダウンロード（初期化の前に取っておく） ---
 if (isset($_GET['backup'])) {
     $tmp = dirname(db_path()) . '/backup_' . date('Ymd_His') . '.sqlite';
@@ -39,6 +45,10 @@ if (isset($_GET['backup'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!hash_equals($csrf, (string)($_POST['csrf'] ?? ''))) {
+        http_response_code(403);
+        exit('無効なリクエストです（ページを開き直してやり直してください）');
+    }
     $act = $_POST['act'] ?? '';
     if ($act === 'event') {
         $st = db()->prepare('INSERT INTO setting (k, v) VALUES (?, ?)
@@ -232,6 +242,7 @@ document.querySelectorAll('.qr').forEach(function (e) {
 
 <h2>イベント名・開催日（登録用紙に印字されます）</h2>
 <form method="post">
+  <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
   <input type="text" name="ev_title" value="<?= $h(event_title()) ?>"
          style="width:100%;font:inherit;padding:6px;border:1px solid #ccc;border-radius:6px;margin-bottom:4px">
   <input type="text" name="ev_date" value="<?= $h(event_date()) ?>"
@@ -241,6 +252,7 @@ document.querySelectorAll('.qr').forEach(function (e) {
 
 <h2>特典の条件</h2>
 <form method="post">
+  <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
   <label>必要ブース数（カンマ区切りで特典1から順に。1つなら特典1だけ。例 4,8）
     <input name="needs" value="<?= $h(implode(',', needs())) ?>"></label>
   <button name="act" value="need">保存</button>
@@ -248,6 +260,7 @@ document.querySelectorAll('.qr').forEach(function (e) {
 
 <h2>出展者登録キー（<?= count($keys) ?>件・未使用 <?= count($unused) ?>件）</h2>
 <form method="post">
+  <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
   <input type="number" name="n" min="1" max="50" value="5"> 件
   <button name="act" value="addkeys">追加発行</button>
   <a href="?print=1" target="_blank" style="margin-left:10px">未使用キーの登録用紙を印刷</a>
@@ -274,10 +287,12 @@ document.querySelectorAll('.qr').forEach(function (e) {
 <h2>初期化</h2>
 <form method="post" onsubmit="return confirm('記録（スタンプ・特典・参加登録）を消します。よろしいですか？')">
   <input type="hidden" name="sure" value="yes">
+  <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
   <button class="warn" name="act" value="reset_rec">記録を初期化（ブース・キーは残す）</button>
 </form>
 <form method="post" onsubmit="return confirm('ブース・登録キー・設定も含めて全部消します。本当によろしいですか？')">
   <input type="hidden" name="sure" value="yes">
+  <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
   <button class="warn" name="act" value="reset_all">すべて初期化（年次の切り替え用）</button>
 </form>
 <h2>受付の鍵（admin.php・export.php 用）</h2>
@@ -295,6 +310,7 @@ document.querySelectorAll('.qr').forEach(function (e) {
 </div>
 <form method="post" onsubmit="return confirm('受付の鍵を再発行します。配布済みの受付QR・URLは使えなくなります。よろしいですか？')">
   <input type="hidden" name="sure" value="yes">
+  <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
   <button class="warn" name="act" value="adminkey">受付の鍵を再発行</button>
 </form>
 <script src="qrgen.js"></script>

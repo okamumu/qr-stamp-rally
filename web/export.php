@@ -20,11 +20,17 @@ if ($fmt === 'booth' || $fmt === 'scan' || $fmt === 'draw') {
     header('Content-Disposition: attachment; filename="stamp_' . $fmt . '_' . date('Ymd_His') . '.csv"');
     $out = fopen('php://output', 'w');
     fwrite($out, "\xEF\xBB\xBF");                       // Excel で開けるように BOM
+    // 出展者名などの自由入力が Excel で数式として実行されないように（CSV数式注入対策）
+    $guard = function ($r) {
+        return array_map(function ($v) {
+            return preg_match('/^[=+\-@\t]/', (string)$v) ? "'" . $v : $v;
+        }, $r);
+    };
     if ($fmt === 'booth') {
         fputcsv($out, ['区画', '出展者名', 'トークン', '来訪者数']);
         $i = 0;
         foreach ($boo as $t => $name) {
-            fputcsv($out, [++$i, $name, $t, isset($visit[$t]) ? $visit[$t] : 0]);
+            fputcsv($out, $guard([++$i, $name, $t, isset($visit[$t]) ? $visit[$t] : 0]));
         }
     } else {
         $rows = db()->query('SELECT * FROM ' . $fmt . ' ORDER BY id');
@@ -32,7 +38,7 @@ if ($fmt === 'booth' || $fmt === 'scan' || $fmt === 'draw') {
         foreach ($rows as $r) {
             $r = array_filter($r, 'is_string', ARRAY_FILTER_USE_KEY);
             if (!$head) { fputcsv($out, array_keys($r)); $head = true; }
-            fputcsv($out, array_values($r));
+            fputcsv($out, $guard(array_values($r)));
         }
     }
     exit;

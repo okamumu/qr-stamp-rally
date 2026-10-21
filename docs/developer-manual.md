@@ -27,7 +27,6 @@ PHP 7.4 ＋ SQLite（PDO）。フレームワーク・ビルド・Composer は�
 | `web/admin.php` | 特典窓口（照会・特典記録）＋登録API（`?admin=鍵`） |
 | `web/export.php` | 集計表示と CSV 書き出し（`?admin=鍵`） |
 | `web/manage.php` | 管理コンソール（Basic 認証）。設定・キー発行・名札印刷・バックアップ・初期化 |
-| `web/log.php` | 旧方式（参加者が出展者QRを読む）の受け口。**使っていない** |
 | `web/lib/config.php` | 設定・鍵・コード検証（`pass_ok()` `booth_ok()` `admin_ok()` `needs()` など） |
 | `web/lib/db.php` | DB 接続・スキーマ・共通クエリ（`db()` `got_of()` `draw_of()` `pass_register()` など） |
 | `web/lib/secret.php` | manage.php の Basic 認証（git管理外。`secret.example.php` からコピー） |
