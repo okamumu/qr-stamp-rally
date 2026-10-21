@@ -17,6 +17,18 @@ require __DIR__ . '/secret.php';
 const EVENT_TITLE = '（イベント名を manage.php で設定してください）';
 const EVENT_DATE  = '';
 
+// 鍵がクエリに入るページがあるので、Referer 経由の漏えいを防ぐ（全ページ共通）
+if (PHP_SAPI !== 'cli' && !headers_sent()) {
+    header('Referrer-Policy: same-origin');
+    header('X-Content-Type-Options: nosniff');
+}
+
+/** HTTPS か（リバースプロキシ配下の X-Forwarded-Proto も見る） */
+function is_https() {
+    if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== '' && $_SERVER['HTTPS'] !== 'off') return true;
+    return ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+}
+
 function setting($k, $default) {
     $q = db()->prepare('SELECT v FROM setting WHERE k = ?');
     $q->execute([$k]);

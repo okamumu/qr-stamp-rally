@@ -3,6 +3,7 @@
 require_once __DIR__ . '/lib/db.php';
 
 if (!admin_ok()) {
+    sleep(1);                       // 鍵の総当たりを遅くする
     http_response_code(403);
     echo '<!doctype html><meta charset="utf-8"><p style="font:16px sans-serif;padding:20px">鍵が違います</p>';
     exit;

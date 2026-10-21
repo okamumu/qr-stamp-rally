@@ -17,6 +17,7 @@ require_once __DIR__ . '/lib/db.php';
 $u = $_SERVER['PHP_AUTH_USER'] ?? '';
 $p = $_SERVER['PHP_AUTH_PW'] ?? '';
 if (!hash_equals(MANAGE_USER, $u) || !password_verify($p, MANAGE_PASS_HASH)) {
+    if ($u !== '' || $p !== '') sleep(1);   // 総当たりを遅くする（初回のダイアログ表示は待たせない）
     header('WWW-Authenticate: Basic realm="stamp manage"');
     http_response_code(401);
     exit('認証が必要です');
@@ -141,7 +142,7 @@ ol { margin:0 0 4mm 5mm; font-size:10.5pt; line-height:1.8; }
 .badge .cd { font-family:ui-monospace,monospace; font-size:10pt; letter-spacing:0.1em; }
 </style></head><body>
 <?php
-$base = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
+$base = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
       . dirname($_SERVER['SCRIPT_NAME']);
 if ($print_badges):
     $n = min(100, max(1, (int)($_GET['n'] ?? 10)));
@@ -296,7 +297,7 @@ document.querySelectorAll('.qr').forEach(function (e) {
   <button class="warn" name="act" value="reset_all">すべて初期化（年次の切り替え用）</button>
 </form>
 <h2>受付の鍵（admin.php・export.php 用）</h2>
-<?php $aurl = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
+<?php $aurl = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
             . dirname($_SERVER['SCRIPT_NAME']) . '/admin.php?admin=' . rawurlencode(admin_key()); ?>
 <p class="st mono"><?= $h(admin_key()) ?></p>
 <p class="st">参加登録（受付係） <a href="register.php?admin=<?= $h(admin_key()) ?>">register.php</a>／

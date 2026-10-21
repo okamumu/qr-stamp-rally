@@ -2,7 +2,7 @@
 /** 集計の表示とCSV書き出し。イベント後の出展者への報告に使う。 */
 require_once __DIR__ . '/lib/db.php';
 
-if (!admin_ok()) { http_response_code(403); echo '鍵が違います'; exit; }
+if (!admin_ok()) { sleep(1); http_response_code(403); echo '鍵が違います'; exit; }   // sleep は総当たり対策
 
 $boo = booth_names();
 $fmt = isset($_GET['csv']) ? $_GET['csv'] : '';

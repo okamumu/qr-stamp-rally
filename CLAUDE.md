@@ -28,7 +28,7 @@ node tests/test_page.js   # index.html のスクリプトを fetch モックで�
 
 ## ローカルで動かす
 
-PHP 7.4 を想定した書き方（レンタルサーバ向け）。Dockerfile があるので:
+PHP 7.4 でも動く書き方（レンタルサーバ向け。Dockerfile は 8.2）。Dockerfile があるので:
 
 ```sh
 docker build -t qr-stamp-rally .

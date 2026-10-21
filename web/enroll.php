@@ -23,6 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $valid = false;
     foreach ($keys as $k) if (hash_equals($k, $key)) { $valid = true; break; }
     if (!$valid) {
+        sleep(1);                   // キーの総当たりを遅くする
         $err = '登録キーが違います';
     } else {
         $q = db()->prepare('SELECT token, name, key FROM booth WHERE enroll_key = ?');
@@ -56,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $url = $booth
-    ? (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
+    ? (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
       . dirname($_SERVER['SCRIPT_NAME']) . '/booth.php?b=' . rawurlencode($booth['token'])
       . '&key=' . rawurlencode($booth['key'])
     : '';

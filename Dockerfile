@@ -1,4 +1,4 @@
-# スタンプラリー（PHP 7.4 + SQLite）
+# スタンプラリー（PHP 8.2 + SQLite。コードは 7.4 でも動く書き方）
 #
 #   docker build -t qr-stamp-rally .
 #   docker run -d -p 8080:80 \
@@ -8,7 +8,7 @@
 # secret.php（manage.php の Basic 認証）はイメージに入れない。
 # 実行時にマウントする（secret.example.php からの作り方はそちらを参照）。
 # DB は /data（ボリューム）に置く＝公開領域の外。
-FROM php:7.4-apache
+FROM php:8.2-apache
 
 COPY web/ /var/www/html/
 

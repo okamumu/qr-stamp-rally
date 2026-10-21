@@ -12,6 +12,7 @@ $token = strtoupper(trim(isset($_REQUEST['b']) ? $_REQUEST['b'] : ''));
 $key   = isset($_REQUEST['key']) ? $_REQUEST['key'] : '';
 
 if (!booth_ok($token, $key)) {
+    sleep(1);                       // 鍵の総当たりを遅くする
     http_response_code(403);
     echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
        . '<p style="font:16px sans-serif;padding:24px;line-height:1.7">このページはブース担当者向けです。<br>'
