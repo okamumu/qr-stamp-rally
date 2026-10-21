@@ -358,6 +358,18 @@ QRのPNGは下の発行分一覧からいつでもダウンロードでき、名
     return cv;
   }
 
+  // タップで1枚だけ拡大表示する（並んだままだとカメラが隣のQRを拾うため）
+  function showBig(url, code) {
+    var o = document.createElement('div');
+    o.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:9;display:grid;'
+                    + 'place-content:center;text-align:center;cursor:zoom-out';
+    o.innerHTML = '<img src="' + url + '" style="width:min(88vw,70vh);image-rendering:pixelated">'
+                + '<div style="font-family:ui-monospace,monospace;font-size:20px;margin-top:8px">' + code + '</div>'
+                + '<div style="color:#888;font-size:13px">タップで閉じる</div>';
+    o.addEventListener('click', function () { o.remove(); });
+    document.body.appendChild(o);
+  }
+
   var pngs = {};   // コード => dataURL
   var grid = document.getElementById('qrs');
   CODES.forEach(function (code) {
@@ -365,11 +377,9 @@ QRのPNGは下の発行分一覧からいつでもダウンロードでき、名
     pngs[code] = url;
     var d = document.createElement('div');
     d.style.cssText = 'text-align:center;font-size:12px';
-    var a = document.createElement('a');
-    a.href = url; a.download = code + '.png';
-    cv.style.width = '112px'; cv.style.height = '112px'; cv.style.border = '1px solid #ddd';
-    a.appendChild(cv);
-    d.appendChild(a);
+    cv.style.cssText = 'width:112px;height:112px;border:1px solid #ddd;cursor:zoom-in';
+    cv.addEventListener('click', function () { showBig(url, code); });
+    d.appendChild(cv);
     d.insertAdjacentHTML('beforeend', '<br><span class="mono">' + code + '</span> <a href="'
       + url + '" download="' + code + '.png">PNG</a>');
     grid.appendChild(d);
