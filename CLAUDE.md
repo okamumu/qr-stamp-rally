@@ -22,7 +22,7 @@
 
 | パス | 中身 |
 |---|---|
-| `web/` | 公開側一式（元の `rentai2026/web/stamp/`）。`index.html`（学生の進捗）・`enroll.php`（企業のセルフ登録）・`booth.php`（ブースの読み取り）・`admin.php`（受付）・`manage.php`（管理コンソール・Basic認証）・`export.php`（集計）・`status.php`／`log.php`・`jsQR.js`・`qrgen.js` |
+| `web/` | 公開側一式（元の `rentai2026/web/stamp/`）。`index.html`（学生の進捗）・`enroll.php`（企業のセルフ登録）・`booth.php`（ブースの読み取り）・`admin.php`（受付・抽選台）・`register.php`（受付スタッフ用の参加登録専用画面）・`manage.php`（管理コンソール・Basic認証）・`export.php`（集計）・`status.php`／`log.php`・`jsQR.js`・`qrgen.js` |
 | `web/lib/` | `config.php`（年次設定と `pass_ok()`）・`db.php`（テーブル）・`booths.php`（空のまま）・`secret.example.php` |
 | `tests/` | Node で回す簡易テスト（`test_pick.js`・`test_page.js`） |
 | `tools/reset_db.sh` | 本番 DB の件数表示とリセット（ssh） |

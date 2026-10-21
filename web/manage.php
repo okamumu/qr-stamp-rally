@@ -8,7 +8,7 @@
  *   - 未使用キーの登録用紙の印刷ビュー（?print=1）
  *   - DBの初期化（記録のみ／全部）
  *
- * ID/PW は lib/config.php の MANAGE_USER / MANAGE_PASS（年次設定）。
+ * ID/PW は lib/secret.php の MANAGE_USER / MANAGE_PASS_HASH（secret.example.php から作る。gitに入れない）。
  */
 require_once __DIR__ . '/lib/db.php';
 

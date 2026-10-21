@@ -188,7 +188,7 @@ docker exec stamp-test sh -c 'mkdir -p /var/rentai_stamp && chmod 777 /var/renta
 
 ## 年次更新のチェックリスト（来年はこれだけ）
 
-1. `lib/config.php` の年次設定＝`MANAGE_PASS` を新しく、
+1. `lib/secret.php` の `MANAGE_PASS_HASH` を新しく、`lib/config.php` の
    `NEED1/NEED2`・`EVENT_TITLE/EVENT_DATE` の既定値を確認（`WIFI_KEY` は wifi/index.php）
 2. デプロイ後、manage.php で：**すべて初期化** → 大会名・開催日を更新 →
    抽選条件を確認 → **登録キーを発行** → 登録用紙を印刷
