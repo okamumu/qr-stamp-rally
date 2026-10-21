@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
-<title>企業展示スタンプラリー</title>
+<title>スタンプラリー</title>
 <style>
  :root{ --accent:#1f4e9c; --ok:#2e7d32; --warn:#c0392b; --line:#ddd; }
  *{box-sizing:border-box;margin:0;padding:0}
@@ -41,7 +41,7 @@
 </head>
 <body>
 <header>
-  <h1>企業展示スタンプラリー</h1>
+  <h1>スタンプラリー</h1>
   <p id="evttl"></p>
 </header>
 
@@ -52,13 +52,13 @@
 <div class="card how">
   <b>回り方</b>
   <ol>
-    <li>企業ブースで<b>展示のご説明を聞いてください</b></li>
-    <li>企業の方が<b>あなたの名札のQRを読み取ります</b>（スマートフォンは不要です）</li>
-    <li><b id="need1">1</b>社回ったら総合受付へ。<b>その場で抽選</b>できます</li>
-    <li><b id="need2">4</b>社回ると<b>もう1回</b>引けます</li>
+    <li>ブースで<b>展示のご説明を聞いてください</b></li>
+    <li>ブースの方が<b>あなたの名札のQRを読み取ります</b>（スマートフォンは不要です）</li>
+    <li><b id="need1">1</b>ブース回ったら総合受付へ。<b>その場で抽選</b>できます</li>
+    <li><b id="need2">4</b>ブース回ると<b>もう1回</b>引けます</li>
   </ol>
   <p style="margin-top:8px;color:#888;font-size:13px">
-    このページは<b>いま何社集まったかを見るためのもの</b>です。
+    このページは<b>いまいくつ集まったかを見るためのもの</b>です。
     自分の名札のQRを読み取ると、いつでも確認できます。<br>
     参加賞は抽選のときに全員にお渡しします。</p>
 </div>
@@ -84,13 +84,13 @@ function render(d) {
   let goal;
   const need2 = d.need2 || all;
   if (n >= need2) {
-    goal = '<div class="goal on2">' + need2 + '社達成！<br>総合受付で<b>2回</b>抽選できます</div>';
+    goal = '<div class="goal on2">' + need2 + 'ブース達成！<br>総合受付で<b>2回</b>抽選できます</div>';
   } else if (n >= d.need1) {
-    goal = '<div class="goal on">' + d.need1 + '社達成！<br>総合受付で<b>抽選</b>できます'
+    goal = '<div class="goal on">' + d.need1 + 'ブース達成！<br>総合受付で<b>抽選</b>できます'
          + '<div style="font-weight:400;font-size:14px;margin-top:6px">'
-         + 'あと' + (need2 - n) + '社でもう1回引けます</div></div>';
+         + 'あと' + (need2 - n) + 'ブースでもう1回引けます</div></div>';
   } else {
-    goal = '<div class="goal off">あと' + (d.need1 - n) + '社で抽選に参加できます</div>';
+    goal = '<div class="goal off">あと' + (d.need1 - n) + 'ブースで抽選に参加できます</div>';
   }
   if (d.draw >= 2) goal += '<div class="goal off" style="margin-top:8px">抽選は2回とも済んでいます</div>';
   else if (d.draw >= 1) goal += '<div class="goal off" style="margin-top:8px">抽選を1回受け取り済みです</div>';
@@ -104,7 +104,7 @@ function render(d) {
   }).join('');
 
   app.innerHTML = card(
-      '<div class="count"><b>' + n + '</b> / ' + all + ' 社</div>'
+      '<div class="count"><b>' + n + '</b> / ' + all + ' ブース</div>'
     + '<div class="bar"><i style="width:' + pct + '%"></i></div>'
     + goal + '<ol>' + list + '</ol>'
     + '<button class="reload" type="button" onclick="location.reload()">最新の状態にする</button>');
@@ -116,15 +116,15 @@ function render(d) {
 
 const code = (q.get('n') || '').toUpperCase().trim();
 if (q.has('b')) {
-  app.innerHTML = msg('ng', 'こちらは企業の方が読み取るQRです')
+  app.innerHTML = msg('ng', 'こちらはブースの方が読み取るQRです')
     + card('<p style="font-size:15px;color:#555">'
-         + 'スタンプは<b>企業の方があなたの名札を読み取る</b>方式です。'
+         + 'スタンプは<b>ブースの方があなたの名札を読み取る</b>方式です。'
          + 'ブースの担当者にお声がけください。<br><br>'
          + '自分の集まり具合は、<b>ご自分の名札のQR</b>を読み取るとご覧いただけます。</p>');
 } else if (!/^[2-9A-HJ-NP-Z]{6}$/.test(code)) {
   app.innerHTML = msg('ng', '名札のQRを読み取ってください')
     + card('<p style="font-size:15px;color:#555">'
-         + 'お手元の名札にあるQRコードを読み取ると、いま何社集まっているかをご覧いただけます。</p>');
+         + 'お手元の名札にあるQRコードを読み取ると、いまいくつ集まっているかをご覧いただけます。</p>');
 } else {
   fetch('status.php?n=' + encodeURIComponent(code) + '&t=' + Date.now(), { cache: 'no-store' })
     .then(function (r) { return r.json(); })
@@ -141,7 +141,7 @@ if (q.has('b')) {
       app.innerHTML = msg('ng', '通信できませんでした')
         + card('<p style="font-size:15px;color:#555">'
              + '電波の良い場所で、もう一度お試しください。<br>'
-             + 'スタンプ自体は企業の方の読み取りで記録されていますので、失われることはありません。</p>'
+             + 'スタンプ自体はブースの方の読み取りで記録されていますので、失われることはありません。</p>'
              + '<button class="reload" type="button" onclick="location.reload()">もう一度</button>');
     });
 }

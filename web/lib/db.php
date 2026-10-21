@@ -20,12 +20,12 @@ function db() {
     // 参加登録（受付で登録した名札だけがラリーに参加できる）
     $pdo->exec('CREATE TABLE IF NOT EXISTS pass (
         code TEXT PRIMARY KEY, ts TEXT NOT NULL, note TEXT DEFAULT "")');
-    // 企業ブース（enroll.php が登録する。初回は lib/booths.php から取り込む）
+    // ブース（enroll.php が登録する。初回は lib/booths.php から取り込む）
     $pdo->exec('CREATE TABLE IF NOT EXISTS booth (
         token TEXT PRIMARY KEY, name TEXT NOT NULL, key TEXT NOT NULL,
         enroll_key TEXT DEFAULT "", ts TEXT NOT NULL)');
     $pdo->exec('CREATE TABLE IF NOT EXISTS setting (k TEXT PRIMARY KEY, v TEXT NOT NULL)');
-    // 企業登録キー。発行は manage.php だけ（ファイルからのseedはしない＝
+    // 出展者登録キー。発行は manage.php だけ（ファイルからのseedはしない＝
     // 年次切替の「すべて初期化」後に旧年のキーが復活しないように）
     $pdo->exec('CREATE TABLE IF NOT EXISTS ekey (k TEXT PRIMARY KEY, ts TEXT NOT NULL)');
     if ((int)$pdo->query('SELECT COUNT(*) FROM booth')->fetchColumn() === 0
@@ -41,7 +41,7 @@ function db() {
 
 function now_() { return date('Y-m-d H:i:s'); }
 
-/** その参加証がこれまでに取得した企業トークン */
+/** その参加証がこれまでに取得したブーストークン */
 function got_of($code) {
     $q = db()->prepare('SELECT DISTINCT booth FROM scan WHERE code = ? AND booth <> "start"');
     $q->execute([$code]);

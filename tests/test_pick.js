@@ -6,12 +6,12 @@ const pick = new Function('return ' + body)();
 
 const T = [];
 const eq = (l, g, w) => T.push([l, g === w, g, w]);
-eq('学生ページのURL', pick('https://rentai-chugoku.org/stamp/?n=9KXKVT'), '9KXKVT');
+eq('参加者ページのURL', pick('https://rentai-chugoku.org/stamp/?n=9KXKVT'), '9KXKVT');
 eq('小文字でも',      pick('https://rentai-chugoku.org/stamp/?n=9kxkvt'), '9KXKVT');
 eq('他の引数つき',    pick('https://rentai-chugoku.org/stamp/?x=1&n=ABFBGR&y=2'), 'ABFBGR');
 eq('コード単体',      pick('9KXKVT'), '9KXKVT');
 eq('前後に空白',      pick('  9KXKVT \n'), '9KXKVT');
-eq('企業QRは拾わない', pick('https://rentai-chugoku.org/stamp/?b=UY6B'), '');
+eq('ブースQRは拾わない', pick('https://rentai-chugoku.org/stamp/?b=UY6B'), '');
 eq('管理URLも拾える', pick('https://rentai-chugoku.org/stamp/admin.php?admin=K&n=9KXKVT'), '9KXKVT');
 eq('無関係なQR',      pick('https://example.com/'), '');
 eq('空',              pick(''), '');

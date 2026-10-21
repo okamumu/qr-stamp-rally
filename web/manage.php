@@ -4,7 +4,7 @@
  *
  * できること:
  *   - 抽選条件（NEED1/NEED2）の変更（DBに保存。configの値は既定値）
- *   - 企業登録キーの追加発行と一覧（使用状況つき）
+ *   - 出展者登録キーの追加発行と一覧（使用状況つき）
  *   - 未使用キーの登録用紙の印刷ビュー（?print=1）
  *   - DBの初期化（記録のみ／全部）
  *
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                              ON CONFLICT(k) DO UPDATE SET v = excluded.v');
         $st->execute(['ev_title', trim((string)($_POST['ev_title'] ?? ''))]);
         $st->execute(['ev_date',  trim((string)($_POST['ev_date'] ?? ''))]);
-        $msg = '大会名・開催日を保存しました';
+        $msg = 'イベント名・開催日を保存しました';
     } elseif ($act === 'need') {
         $n1 = max(1, (int)($_POST['need1'] ?? 1));
         $n2 = max(1, (int)($_POST['need2'] ?? 1));
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                              ON CONFLICT(k) DO UPDATE SET v = excluded.v');
         $st->execute(['need1', $n1]);
         $st->execute(['need2', $n2]);
-        $msg = "抽選条件を保存しました（1回目 {$n1}社／2回目 {$n2}社）";
+        $msg = "抽選条件を保存しました（1回目 {$n1}ブース／2回目 {$n2}ブース）";
     } elseif ($act === 'adminkey' && ($_POST['sure'] ?? '') === 'yes') {
         admin_key_rotate();
         $msg = '受付の鍵を再発行しました（古いURL・QRは無効になります）';
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($act === 'reset_all' && ($_POST['sure'] ?? '') === 'yes') {
         foreach (['scan', 'draw', 'pass', 'booth', 'ekey', 'setting'] as $t)
             db()->exec("DELETE FROM $t");
-        $msg = 'すべて初期化しました（企業・登録キー・設定も消去）';
+        $msg = 'すべて初期化しました（ブース・登録キー・設定も消去）';
     }
     // 二重送信（リロードでの再POST）を防ぐため GET へ戻す
     header('Location: ' . $_SERVER['SCRIPT_NAME'] . '?m=' . urlencode($msg));
@@ -77,11 +77,11 @@ $cnt = [];
 foreach (['scan', 'draw', 'pass', 'booth'] as $t)
     $cnt[$t] = (int)db()->query("SELECT COUNT(*) FROM $t")->fetchColumn();
 
-// --- 印刷ビュー（print=1: 企業登録用紙 / print=admin: 受付スタッフ用紙） ---
+// --- 印刷ビュー（print=1: 出展者登録用紙 / print=admin: 受付スタッフ用紙） ---
 if (isset($_GET['print'])) {
     $print_admin = ($_GET['print'] === 'admin');
     ?><!doctype html><html lang="ja"><head><meta charset="utf-8">
-<title>企業ブース登録用紙</title>
+<title>ブース登録用紙</title>
 <style>
 @page { size: A4 portrait; margin: 0; }
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -128,13 +128,13 @@ if ($print_admin):
 $eurl = $base . '/enroll.php';
 foreach ($unused as $k): ?>
 <div class="slip">
-<h1>企業展示スタンプラリー　ブース登録のご案内</h1>
+<h1>スタンプラリー　ブース登録のご案内</h1>
 <p class="ev"><?= $h(event_title()) ?>　<?= $h(event_date()) ?></p>
 <ol>
 <li>ブースでお使いになる端末（スマートフォン等）で右のQRを読み、登録ページを開きます</li>
-<li><b>社名</b>と下の<b>登録キー</b>を入力して「登録する」を押します</li>
+<li><b>出展者名</b>と下の<b>登録キー</b>を入力して「登録する」を押します</li>
 <li>表示されたQR（読み取り画面）を<b>ブックマーク</b>してください。当日はその画面で
-学生の名札QRを読み、スタンプを押します</li>
+参加者の名札QRを読み、スタンプを押します</li>
 </ol>
 <div class="row">
 <div class="key">登録キー<br><b><?= $h($k['k']) ?></b></div>
@@ -174,12 +174,12 @@ document.querySelectorAll('.qr').forEach(function (e) {
  label{margin-right:10px}
  form{margin:6px 0}
 </style>
-<h1>企業展示スタンプラリー　管理コンソール</h1>
+<h1>スタンプラリー　管理コンソール</h1>
 <p class="st">記録：スタンプ <?= $cnt['scan'] ?>件／抽選 <?= $cnt['draw'] ?>件／
-参加登録 <?= $cnt['pass'] ?>名／企業 <?= $cnt['booth'] ?>社</p>
+参加登録 <?= $cnt['pass'] ?>名／ブース <?= $cnt['booth'] ?>件</p>
 <?php if ($msg): ?><div class="done"><?= $h($msg) ?></div><?php endif; ?>
 
-<h2>大会名・開催日（登録用紙に印字されます）</h2>
+<h2>イベント名・開催日（登録用紙に印字されます）</h2>
 <form method="post">
   <input type="text" name="ev_title" value="<?= $h(event_title()) ?>"
          style="width:100%;font:inherit;padding:6px;border:1px solid #ccc;border-radius:6px;margin-bottom:4px">
@@ -190,13 +190,13 @@ document.querySelectorAll('.qr').forEach(function (e) {
 
 <h2>抽選条件</h2>
 <form method="post">
-  <label>1回目 <input type="number" name="need1" min="1" value="<?= need1() ?>"> 社</label>
+  <label>1回目 <input type="number" name="need1" min="1" value="<?= need1() ?>"> ブース</label>
   <label>2回目 <input type="number" name="need2" min="1"
-         value="<?= need2() ?>"> 社</label>
+         value="<?= need2() ?>"> ブース</label>
   <button name="act" value="need">保存</button>
 </form>
 
-<h2>企業登録キー（<?= count($keys) ?>件・未使用 <?= count($unused) ?>件）</h2>
+<h2>出展者登録キー（<?= count($keys) ?>件・未使用 <?= count($unused) ?>件）</h2>
 <form method="post">
   <input type="number" name="n" min="1" max="50" value="5"> 件
   <button name="act" value="addkeys">追加発行</button>
@@ -211,9 +211,9 @@ document.querySelectorAll('.qr').forEach(function (e) {
 <h2>初期化</h2>
 <form method="post" onsubmit="return confirm('記録（スタンプ・抽選・参加登録）を消します。よろしいですか？')">
   <input type="hidden" name="sure" value="yes">
-  <button class="warn" name="act" value="reset_rec">記録を初期化（企業・キーは残す）</button>
+  <button class="warn" name="act" value="reset_rec">記録を初期化（ブース・キーは残す）</button>
 </form>
-<form method="post" onsubmit="return confirm('企業・登録キー・設定も含めて全部消します。本当によろしいですか？')">
+<form method="post" onsubmit="return confirm('ブース・登録キー・設定も含めて全部消します。本当によろしいですか？')">
   <input type="hidden" name="sure" value="yes">
   <button class="warn" name="act" value="reset_all">すべて初期化（年次の切り替え用）</button>
 </form>

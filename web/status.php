@@ -1,5 +1,5 @@
 <?php
-/** 名札コードの進捗を返す。学生ページが自分の状況を表示するのに使う。 */
+/** 名札コードの進捗を返す。参加者ページが自分の状況を表示するのに使う。 */
 require_once __DIR__ . '/lib/db.php';
 
 header('Content-Type: application/json; charset=utf-8');

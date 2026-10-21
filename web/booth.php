@@ -1,10 +1,10 @@
 <?php
 /**
- * 企業ブース用の読み取り画面。
+ * ブース用の読み取り画面。
  *
- * 各社に配る QR は、このページへの鍵つきURL（?b=トークン&key=鍵）。
- * 担当者は朝に一度開いてカメラを起動し、説明後に学生の名札QRを読む。
- * **学生の端末には何も保存しないので、ブラウザの違いや電池切れに左右されない。**
+ * 各ブースに配る QR は、このページへの鍵つきURL（?b=トークン&key=鍵）。
+ * 担当者は朝に一度開いてカメラを起動し、説明後に参加者の名札QRを読む。
+ * **参加者の端末には何も保存しないので、ブラウザの違いや電池切れに左右されない。**
  */
 require_once __DIR__ . '/lib/db.php';
 
@@ -14,7 +14,7 @@ $key   = isset($_REQUEST['key']) ? $_REQUEST['key'] : '';
 if (!booth_ok($token, $key)) {
     http_response_code(403);
     echo '<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-       . '<p style="font:16px sans-serif;padding:24px;line-height:1.7">このページは出展企業の担当者向けです。<br>'
+       . '<p style="font:16px sans-serif;padding:24px;line-height:1.7">このページはブース担当者向けです。<br>'
        . 'お渡ししたQRコードから開いてください。</p>';
     exit;
 }
@@ -28,7 +28,7 @@ if (isset($_GET['scan'])) {
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
     // **必ず JSON を返す。** 例外をそのまま出すと画面に PHP のエラーが並び、
-    // 当日に企業の担当者を不安にさせる。
+    // 当日にブース担当者を不安にさせる。
     try {
         $code = strtoupper(trim(isset($_GET['n']) ? $_GET['n'] : ''));
         if (!preg_match('/^[2-9A-HJ-NP-Z]{6}$/', $code)) {
@@ -101,14 +101,14 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 <body>
 <header>
   <h1><?= $h($name) ?></h1>
-  <p>企業展示スタンプラリー　受付用（学生には見せないでください）</p>
+  <p>スタンプラリー　受付用（参加者には見せないでください）</p>
 </header>
 
-<div id="res"><div class="m" style="color:#888;font-size:18px">「次の学生を読み取る」を押してください</div></div>
+<div id="res"><div class="m" style="color:#888;font-size:18px">「次の参加者を読み取る」を押してください</div></div>
 
 <div class="panel">
   <video id="v" playsinline muted hidden></video>
-  <button class="start" id="startBtn" type="button">次の学生を読み取る</button>
+  <button class="start" id="startBtn" type="button">次の参加者を読み取る</button>
   <button class="stop" id="stopBtn" type="button" hidden>止める</button>
   <div class="cnt"><span>本日の読み取り</span><span><b id="cnt">0</b> 件</span></div>
 </div>
@@ -116,13 +116,13 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 <div class="panel">
   <b style="font-size:14px">使い方</b>
   <ol>
-    <li>学生に展示のご説明をしてください</li>
-    <li>「次の学生を読み取る」を押し、<b>学生の名札のQR</b>にカメラを向けます</li>
+    <li>参加者に展示のご説明をしてください</li>
+    <li>「次の参加者を読み取る」を押し、<b>参加者の名札のQR</b>にカメラを向けます</li>
     <li>緑色で「スタンプしました」と出れば完了です。<b>カメラは自動で閉じます</b></li>
-    <li>次の学生には、もう一度「次の学生を読み取る」を押してください</li>
+    <li>次の参加者には、もう一度「次の参加者を読み取る」を押してください</li>
   </ol>
   <p style="font-size:13px;color:#777;margin-top:8px">
-    うまく読めないときは、学生に総合受付へお越しいただくようお伝えください。</p>
+    うまく読めないときは、参加者に総合受付へお越しいただくようお伝えください。</p>
 </div>
 
 <script src="jsQR.js"></script>
@@ -135,7 +135,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
   let stream = null, timer = null, det = null, busy = false, count = 0;
 
   /** 読み取ったら必ずカメラを閉じる。
-      開いたままだと、近くのQR（他社のカードや掲示物）をうっかり拾ってしまう。 */
+      開いたままだと、近くのQR（他のカードや掲示物）をうっかり拾ってしまう。 */
   function closeCamera() {
     if (timer) { clearInterval(timer); timer = null; }
     if (stream) { stream.getTracks().forEach(function (t) { t.stop(); }); stream = null; }
@@ -148,7 +148,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
                   + (s ? '<div class="s">' + s + '</div>' : '') + '</div>';
   }
 
-  /** 読み取った文字列から名札コードを取り出す（学生ページのURLでもコード単体でも受ける） */
+  /** 読み取った文字列から名札コードを取り出す（参加者ページのURLでもコード単体でも受ける） */
   function pick(text) {
     if (!text) return '';
     let m = String(text).match(/[?&]n=([2-9A-HJ-NP-Z]{6})/i);
@@ -167,9 +167,9 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
                           + '&n=' + encodeURIComponent(code), { cache: 'no-store' });
       const j = await r.json();
       if (!j.ok) { show('ng', j.msg, code); }
-      else if (j.dup) { show('dup', j.msg, code + '　' + j.n + ' / ' + j.all + ' 社'); }
+      else if (j.dup) { show('dup', j.msg, code + '　' + j.n + ' / ' + j.all + ' ブース'); }
       else { count++; cntEl.textContent = count;
-             show('ok', j.msg, code + '　' + j.n + ' / ' + j.all + ' 社'); }
+             show('ok', j.msg, code + '　' + j.n + ' / ' + j.all + ' ブース'); }
     } catch (e) {
       show('ng', '通信できませんでした', 'もう一度読み取ってください');
     }
@@ -219,7 +219,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
   stopBtn.addEventListener('click', function () {
     closeCamera();
-    show('', '止めました', '「次の学生を読み取る」で再開します');
+    show('', '止めました', '「次の参加者を読み取る」で再開します');
   });
 
   // 画面が消えないように（対応端末のみ）

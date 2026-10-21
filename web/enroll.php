@@ -1,14 +1,14 @@
 <?php
 /**
- * 企業ブースの登録（セルフ登録API・2026-10-10新設）
+ * ブースの登録（セルフ登録API・2026-10-10新設）
  *
- * 事前に紙で渡した登録キー（lib/enroll_keys.php・1キー=1ブース）と社名で登録すると、
+ * 事前に紙で渡した登録キー（lib/enroll_keys.php・1キー=1ブース）と出展者名で登録すると、
  * ブースのトークンと鍵が発行され、読み取り画面のURLとQRがその場で表示される。
- * 同じキーでもう一度登録すると：社名を入れていれば社名を修正、
+ * 同じキーでもう一度登録すると：出展者名を入れていれば出展者名を修正、
  * 空のままなら再表示だけする（QRとURLは変わらない）。
  *
  *   画面   /stamp/enroll.php            … 入力フォーム
- *   登録   POST name=社名&key=登録キー
+ *   登録   POST name=出展者名&key=登録キー
  */
 require_once __DIR__ . '/lib/db.php';
 
@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         if (!$booth) {
             if ($name === '' || mb_strlen($name) > 60) {
-                $err = '社名を入力してください（60文字まで）';
+                $err = '出展者名を入力してください（60文字まで）';
             } else {
                 $A = PASS_ALPH;
                 do {
@@ -65,7 +65,7 @@ $url = $booth
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>企業ブースの登録｜スタンプラリー</title>
+<title>ブースの登録｜スタンプラリー</title>
 <style>
  body{font-family:"Hiragino Sans",sans-serif;padding:18px;line-height:1.7;max-width:560px;margin:0 auto}
  h1{font-size:17px;color:#1f4e9c;margin-bottom:12px}
@@ -77,12 +77,12 @@ $url = $booth
  .url{font-family:ui-monospace,monospace;font-size:11px;word-break:break-all;color:#333}
  p.c{color:#777;font-size:13px}
 </style>
-<h1>企業展示スタンプラリー　ブース登録</h1>
+<h1>スタンプラリー　ブース登録</h1>
 <p style="color:#777;font-size:13px;margin-bottom:10px"><?= $h(event_title()) ?>　<?= $h(event_date()) ?></p>
 <?php if ($err): ?><div class="ng"><?= $h($err) ?></div><?php endif; ?>
 <?php if ($booth): ?>
   <div class="done">
-    <b><?= $h($booth['name']) ?></b> のブースを<?= $renamed ? '修正しました（社名のみ。QRはそのまま有効です）' : '登録しました' ?>。<br>
+    <b><?= $h($booth['name']) ?></b> のブースを<?= $renamed ? '修正しました（出展者名のみ。QRはそのまま有効です）' : '登録しました' ?>。<br>
     下のQRをブース担当の端末で読む（または開く）と読み取り画面になります。<br>
     <b>この画面をブックマークまたは印刷してください。</b>
     <div class="qr" id="qr"></div>
@@ -97,10 +97,10 @@ $url = $booth
   </script>
 <?php else: ?>
   <form method="post">
-    <label>社名（名札や集計に表示されます）<input name="name" maxlength="60"></label>
+    <label>出展者名（名札や集計に表示されます）<input name="name" maxlength="60"></label>
     <label>登録キー（お渡しした紙に記載）<input name="key" autocapitalize="characters"></label>
     <button type="submit">登録する</button>
   </form>
-  <p class="c">同じ登録キーでもう一度登録すると、社名を修正できます（QRは変わりません）。
-  社名を空のまま送信すると、発行済みのQRを再表示します。</p>
+  <p class="c">同じ登録キーでもう一度登録すると、出展者名を修正できます（QRは変わりません）。
+  出展者名を空のまま送信すると、発行済みのQRを再表示します。</p>
 <?php endif; ?>

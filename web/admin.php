@@ -76,7 +76,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
  input{font:inherit;padding:10px;width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:8px}
  ul{margin:14px 0 0;padding-left:18px;color:#666;font-size:14px}
 </style>
-<h1>企業展示スタンプラリー　照会・抽選（抽選台）</h1>
+<h1>スタンプラリー　照会・抽選（抽選台）</h1>
 <?php if ($msg): ?><div class="done"><?= $h($msg) ?></div><?php endif; ?>
 
 <?php if ($code === ''): ?>
@@ -102,7 +102,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
     let stream = null, timer = null, det = null;
 
     /** 読み取った文字列から名札コードを取り出す。
-        学生ページのURL（…/stamp/?n=XXXXXX）でも、コード単体でも受ける。 */
+        参加者ページのURL（…/stamp/?n=XXXXXX）でも、コード単体でも受ける。 */
     function pick(text) {
       if (!text) return '';
       let m = String(text).match(/[?&]n=([2-9A-HJ-NP-Z]{6})/i);
@@ -184,7 +184,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 ?>
   <h2>参加証</h2>
   <p class="c"><?= $h($code) ?></p>
-  <div class="big"><?= $n ?> / <?= $all ?> 社</div>
+  <div class="big"><?= $n ?> / <?= $all ?> ブース</div>
   <div class="st">抽選 <b><?= $d['count'] ?></b> 回済み　参加賞 <?= $d['gift'] ? '<b>渡し済み</b>' : 'まだ' ?></div>
 
   <form method="post">
@@ -197,9 +197,9 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
     <?php elseif ($d['count'] >= 2): ?>
       <div class="ng">2回とも抽選済みです</div>
     <?php elseif ($d['count'] >= 1): ?>
-      <div class="ng">1回目は済み。<?= need2() ?>社そろうと2回目を引けます</div>
+      <div class="ng">1回目は済み。<?= need2() ?>ブースそろうと2回目を引けます</div>
     <?php else: ?>
-      <div class="ng">あと<?= need1() - $n ?>社です</div>
+      <div class="ng">あと<?= need1() - $n ?>ブースです</div>
     <?php endif; ?>
     <?php if (!$d['gift'] && $d['count'] >= 1): ?>
       <button class="sub" name="act" value="gift">参加賞を渡した</button>

@@ -1,5 +1,5 @@
 <?php
-/** 学生ページからの記録受け。同一オリジンなので CORS は不要。 */
+/** 参加者ページからの記録受け。同一オリジンなので CORS は不要。 */
 require_once __DIR__ . '/lib/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
@@ -23,7 +23,7 @@ try {
     $st->execute([now_(), $code, $booth === '' ? 'start' : strtolower($booth) === 'start' ? 'start' : $booth, $note]);
     echo json_encode(['ok' => true, 'got' => count(got_of($code))]);
 } catch (Exception $e) {
-    // 記録に失敗しても学生の画面は止めない
+    // 記録に失敗しても参加者の画面は止めない
     http_response_code(500);
     echo json_encode(['ok' => false, 'error' => 'db']);
 }
