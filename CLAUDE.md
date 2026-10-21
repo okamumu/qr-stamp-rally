@@ -1,64 +1,75 @@
 # CLAUDE.md
 
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 ## これは何か
 
-イベントの企業展示スタンプラリー（名札QR方式）。2026年度（第77回）電気・情報関連学会中国支部連合大会（2026-10-17）で実際に使ったものを、
-**骨格を汎用化する**ために 2026-10-21 にここへ写した。将来は公開リポジトリ（MIT、名前案 `okamumu/rentai-stamp`）にする方針。
+イベント展示のスタンプラリー（名札QR方式）。PHP ＋ SQLite で、フレームワークやビルドは使わない。
+コード中のコメント・文言はすべて日本語。作業言語も日本語。
 
-- 学生は名札を下げているだけ（スマートフォンは不要）。**企業がブースで学生の名札QRを読む**
-- 受付が名札QRを読んで「参加登録」し、N社そろったら紙のくじを引かせる（システムは判定だけ）
-- 企業はブース登録用紙のキーで**セルフ登録**する
-- PHP 7.4 ＋ SQLite（さくらのレンタルサーバで稼働した構成）
+役割分担（コードの前提）:
 
-作業言語は日本語。
+- **参加者は名札を下げているだけ**（端末には何も保存しない）。自分の名札QRを読めば進捗を確認できる
+- **出展者がブースで参加者の名札QRを読む**（`booth.php`）。ブースは登録キーでセルフ登録（`enroll.php`）
+- **受付が名札QRを読んで「参加登録」**（`admin.php`）。登録済みの名札だけがラリーに参加でき、
+  必要ブース数に達したら特典（抽選）の判定をする
 
-## 元の置き場所（ここは写し）
-
-- **2026年度の本番のコードは `rentai2026/web/stamp/`（大会サイトの git）に残っている。** 配備はそちらから行う。ここで直しても大会サイトには反映されない
-- 2026年度の運用資料・紙くじ・大会後のデータ（個人情報）は Dropbox の `2026大会/担当業務/総合受付/スタンプラリー2026/` に残した。**ここへは写していない**
-- 2026年度の git 履歴は引き継がない（管理用の鍵が `rentai2026` の履歴に入っているため）。ここは 2026-10-21 に新しく作ったローカルの git（リモートなし・push しない）。写すときに `docs/公開前チェックリスト.md` にあった旧鍵の値は伏せた
-
-## ファイル
-
-| パス | 中身 |
-|---|---|
-| `web/` | 公開側一式（元の `rentai2026/web/stamp/`）。`index.html`（学生の進捗）・`enroll.php`（企業のセルフ登録）・`booth.php`（ブースの読み取り）・`admin.php`（受付・抽選台）・`register.php`（受付スタッフ用の参加登録専用画面）・`manage.php`（管理コンソール・Basic認証）・`export.php`（集計）・`status.php`／`log.php`・`jsQR.js`・`qrgen.js` |
-| `web/lib/` | `config.php`（年次設定と `pass_ok()`）・`db.php`（テーブル）・`booths.php`（空のまま）・`secret.example.php` |
-| `tests/` | Node で回す簡易テスト（`test_pick.js`・`test_page.js`） |
-| `tools/reset_db.sh` | 本番 DB の件数表示とリセット（ssh） |
-| `docs/2026運用README.md` | 2026年度の README（しくみ・画面・当日の運用・はまった点の正） |
-| `docs/公開前チェックリスト.md` | 公開リポジトリにするための作業一覧 |
-| `docs/当日記録メモ.md`・`docs/企業向けマニュアル2026.md` | 当日の記録項目と企業向けの説明 |
-
-## 秘密と個人情報
-
-- `web/lib/secret.php`（管理コンソールの ID とパスワードのハッシュ）は写していない。`secret.example.php` から作る。git に入れない
-- 受付の鍵・企業の鍵は DB に入る（コードには無い）。DB は公開領域の外に置く（環境変数 `STAMP_DB_DIR`）
-- `tools/reset_db.sh` には2026年度の ssh の接続先が書いてある。公開前に環境変数か引数にする（チェックリストの項目）
-- `jsQR.js` はライセンス表記の無いバンドル。MIT の LICENSE だけでは足りない（チェックリスト参照）
-
-## 写した時点の状態（2026-10-21）
-
-- `web/.htaccess` は `Deny from all`（大会後の 2026-10-18 に本番を止めたときのもの）。ローカルで動かすときは外す
-- `tests/test_pick.js` は 11/11 合格
-- **`tests/test_page.js` は 0/19。** 学生ページを進捗表示だけに作り替えた 2026-10-10 より前の作りを前提にしていて、移す前から通っていなかった。書き直すか捨てるかを決める
-- `web/log.php` は旧方式（学生が企業QRを読む）の受け口で、使っていない
-
-## ローカルで試す
+## テスト
 
 ```sh
-docker run -d --name stamp-test -p 8080:80 -e STAMP_DB_DIR=/tmp/stamp \
-  -v "$PWD/web:/var/www/html/stamp:ro" php:7.4-apache
+node tests/test_pick.js   # admin.php の pick()（QRの中身から名札コードを抽出）を切り出して検証
+node tests/test_page.js   # index.html のスクリプトを Node で回して表示の分岐を確認
 ```
 
-`web/.htaccess` の `Deny from all` と、`web/lib/secret.php` の用意が先に要る。カメラなしでも `booth.php?b=…&key=…&scan=1&n=コード` で記録できる。
+テストランナーは使わず、各ファイルが素の Node スクリプト（合格数を表示し、NG があれば exit 1）。
+`test_pick.js` は PHP ソースから、`test_page.js` は HTML から、正規表現で対象関数を切り出して回す
+——**対象の関数シグネチャや周辺構造を変えるとテストの切り出しが壊れる**ので、変更時はテストもそろえて直す。
+現状 `test_pick.js` は合格、`test_page.js` は不合格（文言・挙動の変更に追従していない）。
 
-## 汎用化で触るところ
+## ローカルで動かす
 
-- 連合大会に固有のもの：大会名・URL（`rentai-chugoku.org`）、名札コードの規則（6文字＋検査文字。発行は名簿側）、抽選条件の既定値、学生ページの文言
-- 名札の発行は別ツール（2026年度は `2026大会/次期システム/make_meibo.py`、今後は `~/Documents/rentai-manager` の印刷機能の予定）。サーバはチェックサムを確かめるだけで、名簿とは同期しない
+PHP 7.4 を想定した書き方（レンタルサーバ向け）。動かす前に:
 
-## 作業の決まり
+1. `web/.htaccess` が `Deny from all`（停止用）なので外す
+2. `web/lib/secret.php` を `secret.example.php` からコピーして作る（manage.php の Basic 認証。git に入れない）
+3. DB の置き場所を環境変数 `STAMP_DB_DIR` で指定する（未指定だと `lib/` の4つ上の `rentai_stamp/`
+   ——さくらのレンタルサーバでホーム直下＝公開領域の外になる深さ）
 
-- **配備・push・公開など外に出る操作は、毎回岡村さんの了承を取る**
-- 頼まれていない補助ファイルを作らない。docs のうち、変更に関わるものはそろえて直す
+カメラがなくても `booth.php?b=トークン&key=鍵&scan=1&n=コード` を直接叩けば読み取りを記録できる。
+`admin.php?admin=鍵&api=register&n=コード` で参加登録を API からもできる（名簿からの一括登録用）。
+
+## 構成
+
+| パス | 役割 |
+|---|---|
+| `web/index.html` | 参加者ページ（進捗表示。名札QRの行き先 `?n=コード`。`status.php` を叩く） |
+| `web/enroll.php` | ブースのセルフ登録（登録キー＋出展者名 → トークン・鍵と読み取りQRを発行） |
+| `web/booth.php` | ブースの読み取り画面（`?b=トークン&key=鍵`。応答は必ず JSON で返す） |
+| `web/admin.php` | 受付（参加登録・抽選判定。`?admin=鍵`） |
+| `web/register.php` | 参加登録専用の画面 |
+| `web/manage.php` | 管理コンソール（Basic 認証。イベント名・特典条件の設定、登録キーと名札QRの発行・印刷、DBのバックアップ・初期化） |
+| `web/export.php` | 集計（`?admin=鍵`） |
+| `web/status.php` | 進捗 JSON API |
+| `web/log.php` | 旧方式（参加者が出展者QRを読む）の受け口。使っていない |
+| `web/lib/config.php` | 設定・鍵まわり（`pass_ok()`・`booth_ok()`・`admin_ok()`・`needs()` など） |
+| `web/lib/db.php` | DB 接続とスキーマ（`db()` が CREATE TABLE まで行う。マイグレーションは無い） |
+| `web/jsQR.js` / `web/qrgen.js` | QR の読み取り／生成（バンドル） |
+
+## 設計上の約束ごと
+
+- **DB（SQLite）は公開領域の外に置く**。`db_path()` は置き場所に `.htaccess`（Deny from all）も書く。
+  `*.sqlite` と `web/lib/secret.php` は .gitignore 済み
+- **名札コードは6文字＝5文字＋チェックサム1桁**（紛らわしい字を除いた32文字 `PASS_ALPH`）。
+  発行は manage.php の名札印刷（`pass_new()`）で、**サーバは発行済みコードの控えを持たず、
+  `pass_ok()` の検証だけ**を行う（名簿側の外部ツールで発行しても同じ規則なら通る）。
+  ただし参加には受付での「参加登録」（`pass` テーブル）が別に要る
+- 鍵の持ち方: コードに残る秘密は `secret.php`（manage.php の Basic 認証）だけ。
+  受付の鍵は DB 保存（manage.php で表示・再発行）、ブースの鍵は enroll 時に DB へ発行。
+  照合はすべて `hash_equals()`
+- **ブース用QRは booth.php への鍵つきURL**なので、一度配ったトークンと鍵は変えないこと
+- イベント名・開催日・必要ブース数は manage.php から `setting` テーブルに保存する。
+  `config.php` の定数（`NEEDS`・`EVENT_TITLE` など）はその既定値にすぎない
+- 出展者登録キー（`ekey`）の発行は manage.php だけ。ファイルからの seed はしない
+  （「すべて初期化」後に旧キーが復活しないように）
+- ブース画面など当日に使う画面の API は、例外時も**必ず JSON を返す**
+  （PHP のエラーがそのまま画面に出ると現場を不安にさせる）

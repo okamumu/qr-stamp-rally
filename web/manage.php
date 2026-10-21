@@ -3,9 +3,11 @@
  * 管理コンソール（Basic認証・2026-10-10新設）
  *
  * できること:
- *   - 抽選条件（NEED1/NEED2）の変更（DBに保存。configの値は既定値）
+ *   - 特典の条件（段数と必要ブース数）の変更（DBに保存。config の NEEDS は既定値）
  *   - 出展者登録キーの追加発行と一覧（使用状況つき）
  *   - 未使用キーの登録用紙の印刷ビュー（?print=1）
+ *   - 名札QRの発行（?print=badges。採番して印刷するだけで、サーバは控えを持たない）
+ *   - DBの控えのダウンロード（?backup=1）
  *   - DBの初期化（記録のみ／全部）
  *
  * ID/PW は lib/secret.php の MANAGE_USER / MANAGE_PASS_HASH（secret.example.php から作る。gitに入れない）。
@@ -23,6 +25,19 @@ if (!hash_equals(MANAGE_USER, $u) || !password_verify($p, MANAGE_PASS_HASH)) {
 $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); };
 $msg = '';
 
+// --- DBの控えのダウンロード（初期化の前に取っておく） ---
+if (isset($_GET['backup'])) {
+    $tmp = dirname(db_path()) . '/backup_' . date('Ymd_His') . '.sqlite';
+    // WAL の書きかけを含まない一貫した控えを取る
+    db()->exec('VACUUM INTO ' . db()->quote($tmp));
+    header('Content-Type: application/octet-stream');
+    header('Content-Disposition: attachment; filename="' . basename($tmp) . '"');
+    header('Content-Length: ' . filesize($tmp));
+    readfile($tmp);
+    unlink($tmp);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $act = $_POST['act'] ?? '';
     if ($act === 'event') {
@@ -32,13 +47,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $st->execute(['ev_date',  trim((string)($_POST['ev_date'] ?? ''))]);
         $msg = 'イベント名・開催日を保存しました';
     } elseif ($act === 'need') {
-        $n1 = max(1, (int)($_POST['need1'] ?? 1));
-        $n2 = max(1, (int)($_POST['need2'] ?? 1));
-        $st = db()->prepare('INSERT INTO setting (k, v) VALUES (?, ?)
-                             ON CONFLICT(k) DO UPDATE SET v = excluded.v');
-        $st->execute(['need1', $n1]);
-        $st->execute(['need2', $n2]);
-        $msg = "抽選条件を保存しました（1回目 {$n1}ブース／2回目 {$n2}ブース）";
+        $r = [];
+        foreach (explode(',', (string)($_POST['needs'] ?? '')) as $x) {
+            $x = (int)trim($x);
+            if ($x > 0) $r[] = $x;
+        }
+        sort($r);
+        if (!$r) {
+            $msg = '必要ブース数を1つ以上入れてください（例 4,8）';
+        } else {
+            db()->prepare('INSERT INTO setting (k, v) VALUES (?, ?)
+                           ON CONFLICT(k) DO UPDATE SET v = excluded.v')
+                ->execute(['needs', implode(',', $r)]);
+            $p = [];
+            foreach ($r as $i => $x) $p[] = '特典' . ($i + 1) . '＝' . $x . 'ブース';
+            $msg = '特典の条件を保存しました（' . implode('、', $p) . '）';
+        }
     } elseif ($act === 'adminkey' && ($_POST['sure'] ?? '') === 'yes') {
         admin_key_rotate();
         $msg = '受付の鍵を再発行しました（古いURL・QRは無効になります）';
@@ -55,7 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($act === 'reset_rec' && ($_POST['sure'] ?? '') === 'yes') {
         db()->exec('DELETE FROM scan'); db()->exec('DELETE FROM draw');
         db()->exec('DELETE FROM pass');
-        $msg = '記録（スタンプ・抽選・参加登録）を初期化しました';
+        $msg = '記録（スタンプ・特典・参加登録）を初期化しました';
     } elseif ($act === 'reset_all' && ($_POST['sure'] ?? '') === 'yes') {
         foreach (['scan', 'draw', 'pass', 'booth', 'ekey', 'setting'] as $t)
             db()->exec("DELETE FROM $t");
@@ -79,9 +103,10 @@ foreach (['scan', 'draw', 'pass', 'booth'] as $t)
 
 // --- 印刷ビュー（print=1: 出展者登録用紙 / print=admin: 受付スタッフ用紙） ---
 if (isset($_GET['print'])) {
-    $print_admin = ($_GET['print'] === 'admin');
+    $print_admin  = ($_GET['print'] === 'admin');
+    $print_badges = ($_GET['print'] === 'badges');
     ?><!doctype html><html lang="ja"><head><meta charset="utf-8">
-<title>ブース登録用紙</title>
+<title><?= $print_badges ? '名札' : 'ブース登録用紙' ?></title>
 <style>
 @page { size: A4 portrait; margin: 0; }
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -96,11 +121,37 @@ ol { margin:0 0 4mm 5mm; font-size:10.5pt; line-height:1.8; }
 .key b { font-family:ui-monospace,monospace; font-size:16pt; letter-spacing:0.08em; }
 .qr svg { width:30mm; height:30mm; }
 .n { font-size:8.5pt; color:#666; margin-top:4mm; }
+/* 名札（91mm×55mm・A4に2列×5段） */
+.badges { display:grid; grid-template-columns:91mm 91mm; width:182mm; margin:11mm auto; }
+.badge { width:91mm; height:55mm; border:0.2mm dashed #aaa; padding:4mm 5mm;
+         display:flex; align-items:center; gap:4mm; page-break-inside:avoid; }
+.badge .qr svg { width:24mm; height:24mm; }
+.badge .ev2 { font-size:7.5pt; color:#555; margin-bottom:1mm; }
+.badge .nm { border-bottom:0.3mm solid #999; height:11mm; margin:2mm 0 2mm; }
+.badge .cd { font-family:ui-monospace,monospace; font-size:10pt; letter-spacing:0.1em; }
 </style></head><body>
 <?php
 $base = (isset($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
       . dirname($_SERVER['SCRIPT_NAME']);
-if ($print_admin):
+if ($print_badges):
+    $n = min(100, max(1, (int)($_GET['n'] ?? 10)));
+    $codes = [];
+    while (count($codes) < $n) $codes[pass_new()] = 1;   // 念のため重複を除く
+    $codes = array_keys($codes);
+    ?>
+<div class="badges">
+<?php foreach ($codes as $c): ?>
+<div class="badge">
+  <div class="qr" data-u="<?= $h($base . '/?n=' . $c) ?>"></div>
+  <div style="flex:1">
+    <div class="ev2"><?= $h(event_title()) ?>　<?= $h(event_date()) ?></div>
+    <div class="nm"></div>
+    <div class="cd"><?= $h($c) ?></div>
+  </div>
+</div>
+<?php endforeach; ?>
+</div>
+<?php elseif ($print_admin):
     $rurl = $base . '/register.php?admin=' . rawurlencode(admin_key());
     $aurl = $base . '/admin.php?admin=' . rawurlencode(admin_key());
     $copies = min(10, max(1, (int)($_GET['n'] ?? 4)));
@@ -117,12 +168,12 @@ if ($print_admin):
 </div>
 <div style="text-align:center">
   <div class="qr" data-u="<?= $h($aurl) ?>"></div>
-  <b style="font-size:10.5pt">② 照会・抽選（抽選台）</b><br>
-  <span style="font-size:8.5pt;color:#555">名札QRを読む→抽選の実施・<br>参加賞の受渡しを記録</span>
+  <b style="font-size:10.5pt">② 特典窓口（照会・受け渡し）</b><br>
+  <span style="font-size:8.5pt;color:#555">名札QRを読む→<br>特典の受渡しを記録</span>
 </div>
 </div>
 <p class="n">※QRには運営の鍵が入っています。<b>掲示したり机に置いたままにしないでください</b>
-（読まれると参加者が自分で抽選済みにできてしまいます）。紛失時は管理コンソールから鍵を再発行してください。</p>
+（読まれると参加者が自分で特典を受け取り済みにできてしまいます）。紛失時は管理コンソールから鍵を再発行してください。</p>
 </div>
 <?php endfor; else:
 $eurl = $base . '/enroll.php';
@@ -175,7 +226,7 @@ document.querySelectorAll('.qr').forEach(function (e) {
  form{margin:6px 0}
 </style>
 <h1>スタンプラリー　管理コンソール</h1>
-<p class="st">記録：スタンプ <?= $cnt['scan'] ?>件／抽選 <?= $cnt['draw'] ?>件／
+<p class="st">記録：スタンプ <?= $cnt['scan'] ?>件／特典 <?= $cnt['draw'] ?>件／
 参加登録 <?= $cnt['pass'] ?>名／ブース <?= $cnt['booth'] ?>件</p>
 <?php if ($msg): ?><div class="done"><?= $h($msg) ?></div><?php endif; ?>
 
@@ -188,11 +239,10 @@ document.querySelectorAll('.qr').forEach(function (e) {
   <button name="act" value="event">保存</button>
 </form>
 
-<h2>抽選条件</h2>
+<h2>特典の条件</h2>
 <form method="post">
-  <label>1回目 <input type="number" name="need1" min="1" value="<?= need1() ?>"> ブース</label>
-  <label>2回目 <input type="number" name="need2" min="1"
-         value="<?= need2() ?>"> ブース</label>
+  <label>必要ブース数（カンマ区切りで特典1から順に。1つなら特典1だけ。例 4,8）
+    <input name="needs" value="<?= $h(implode(',', needs())) ?>"></label>
   <button name="act" value="need">保存</button>
 </form>
 
@@ -208,8 +258,21 @@ document.querySelectorAll('.qr').forEach(function (e) {
 <td><?= $k['name'] !== null ? $h($k['name']) : '—' ?></td></tr>
 <?php endforeach; ?></table>
 
+<h2>名札QRの発行</h2>
+<form method="get" target="_blank">
+  <input type="hidden" name="print" value="badges">
+  <input type="number" name="n" min="1" max="100" value="10"> 枚
+  <button>名札を印刷</button>
+</form>
+<p class="st">コードはその場で採番し、サーバは控えを持ちません（開き直すたびに別のコードになります）。
+名札の形式が正しいかの検証だけを行うので、追加発行はいつでもできます。
+ラリーへの参加には受付での参加登録が別に必要です。</p>
+
+<h2>バックアップ</h2>
+<p class="st"><a href="?backup=1">DBの控えをダウンロード</a>（初期化や年次の切り替えの前に取っておく）</p>
+
 <h2>初期化</h2>
-<form method="post" onsubmit="return confirm('記録（スタンプ・抽選・参加登録）を消します。よろしいですか？')">
+<form method="post" onsubmit="return confirm('記録（スタンプ・特典・参加登録）を消します。よろしいですか？')">
   <input type="hidden" name="sure" value="yes">
   <button class="warn" name="act" value="reset_rec">記録を初期化（ブース・キーは残す）</button>
 </form>
@@ -222,7 +285,7 @@ document.querySelectorAll('.qr').forEach(function (e) {
             . dirname($_SERVER['SCRIPT_NAME']) . '/admin.php?admin=' . rawurlencode(admin_key()); ?>
 <p class="st mono"><?= $h(admin_key()) ?></p>
 <p class="st">参加登録（受付係） <a href="register.php?admin=<?= $h(admin_key()) ?>">register.php</a>／
-照会・抽選（抽選台） <a href="admin.php?admin=<?= $h(admin_key()) ?>">admin.php</a>／
+特典窓口（照会・受け渡し） <a href="admin.php?admin=<?= $h(admin_key()) ?>">admin.php</a>／
 集計 <a href="export.php?admin=<?= $h(admin_key()) ?>">export.php</a>／
 <a href="#" onclick="document.getElementById('aqr').hidden=!document.getElementById('aqr').hidden;return false">受付用QRを表示</a>／
 <a href="?print=admin" target="_blank">受付スタッフ用紙を印刷</a>（4枚。枚数は ?print=admin&n=6 のように）</p>

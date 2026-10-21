@@ -8,9 +8,8 @@
 
 
 // ===== 年次設定（年度ごとに見直すのはここだけ）=====
-// 1回目・2回目の抽選に必要なブース数の既定値（manage.php でDBに上書き保存できる。0=全ブース）
-const NEED1 = 4;
-const NEED2 = 8;
+// 特典の段ごとの必要ブース数の既定値（昇順。manage.php でDBに上書き保存できる）
+const NEEDS = [4, 8];
 // 管理コンソール（manage.php）の Basic 認証は lib/secret.php（gitに入れない）。
 // 無ければ secret.example.php をコピーして作る
 require __DIR__ . '/secret.php';
@@ -51,12 +50,24 @@ function admin_key_rotate() {
     return $k;
 }
 
-function need1() { return max(1, setting('need1', NEED1)); }
-
-/** 2回目の抽選に必要なブース数（常に数値。登録済みブース数に依存させない） */
-function need2() {
-    return max(1, setting('need2', NEED2));
+/** 特典1…特典N の必要ブース数（昇順の配列。段数も含めて manage.php で設定する） */
+function needs() {
+    $v = setting_s('needs', '');
+    if ($v === '') {
+        // 旧形式（need1/need2 の個別設定）からの引き継ぎ
+        $n1 = setting('need1', 0);
+        $n2 = setting('need2', 0);
+        if ($n1 > 0) return $n2 > 0 ? [$n1, $n2] : [$n1];
+        return NEEDS;
+    }
+    $r = [];
+    foreach (explode(',', $v) as $x) { $x = (int)trim($x); if ($x > 0) $r[] = $x; }
+    sort($r);
+    return $r ? $r : NEEDS;
 }
+
+/** 特典1の必要ブース数（集計の「達成」の基準） */
+function need1() { return needs()[0]; }
 
 /** 出展者登録キーの一覧（DB。発行は manage.php） */
 function enroll_keys() {
@@ -125,6 +136,15 @@ function pass_ok($code) {
     $s = 0;
     for ($i = 0; $i < 5; $i++) $s += ($i + 1) * strpos(PASS_ALPH, $code[$i]);
     return PASS_ALPH[$s % 32] === $code[5];
+}
+
+/** 名札コードの発行（pass_ok() を満たす6文字を採番する。控えは持たない） */
+function pass_new() {
+    $c = '';
+    for ($i = 0; $i < 5; $i++) $c .= PASS_ALPH[random_int(0, 31)];
+    $s = 0;
+    for ($i = 0; $i < 5; $i++) $s += ($i + 1) * strpos(PASS_ALPH, $c[$i]);
+    return $c . PASS_ALPH[$s % 32];
 }
 
 function admin_ok() {
