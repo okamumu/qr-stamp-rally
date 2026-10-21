@@ -13,7 +13,7 @@ PHP ＋ SQLite（PDO）。7.4 でも動く書き方を守る（レンタルサ�
   読むたびに使い捨て領域で開くため、localStorage 方式は破綻した経緯がある。
   `index.html` のコメント参照）
 - **出展者が参加者の名札QRを読む**（`booth.php`）。ブースは登録キーでセルフ登録（`enroll.php`）
-- **受付が名札QRを読んで参加登録**（`register.php` / `prize.php`）。登録済み（`pass` テーブル）の
+- **受付が名札QRを読んで参加登録**（`register.php` / `reward.php`）。登録済み（`pass` テーブル）の
   名札だけがラリーに参加でき、必要ブース数に達したら特典を渡して記録する
 
 ## 2. ファイル構成
@@ -24,8 +24,8 @@ PHP ＋ SQLite（PDO）。7.4 でも動く書き方を守る（レンタルサ�
 | `web/status.php` | 進捗 JSON API（`?n=コード`） |
 | `web/enroll.php` | ブースのセルフ登録。登録キー＋出展者名 → トークン・鍵を発行し読み取りQRを表示 |
 | `web/booth.php` | ブースの読み取り画面（`?b=トークン&key=鍵`）。`?scan=1&n=コード` で記録（JSON） |
-| `web/register.php` | 受付の参加登録専用画面。実体は prize.php の登録APIを叩く |
-| `web/prize.php` | 特典窓口（照会・特典記録）＋登録API（`?admin=鍵`） |
+| `web/register.php` | 受付の参加登録専用画面。実体は reward.php の登録APIを叩く |
+| `web/reward.php` | 特典窓口（照会・特典記録）＋登録API（`?admin=鍵`） |
 | `web/export.php` | 集計表示と CSV 書き出し（`?admin=鍵`） |
 | `web/manage.php` | 管理コンソール（Basic 認証）。設定・キー発行・名札印刷・バックアップ・初期化 |
 | `web/lib/config.php` | 設定・鍵・コード検証（`pass_ok()` `booth_ok()` `admin_ok()` `needs()` など） |
@@ -80,7 +80,7 @@ WAL モード・busy_timeout 5000ms。
 | 鍵 | 置き場所 | 発行・再発行 |
 |---|---|---|
 | manage.php の Basic 認証 | `lib/secret.php`（コード中で唯一の秘密） | 手動（`password_hash()` で作る） |
-| 受付の鍵（prize.php / register.php / export.php の `?admin=`） | DB（setting.admin_key） | manage.php で表示・再発行 |
+| 受付の鍵（reward.php / register.php / export.php の `?admin=`） | DB（setting.admin_key） | manage.php で表示・再発行 |
 | ブースの鍵（booth.php の `?key=`） | DB（booth.key）。enroll 時に発行 | 再発行の仕組みは無い（下記） |
 | 出展者登録キー（ekey） | DB | manage.php のみ。**ファイルからの seed はしない**（「すべて初期化」後に旧キーが復活しないように） |
 
@@ -91,7 +91,7 @@ WAL モード・busy_timeout 5000ms。
 
 ## 5. コーディング上の約束ごと
 
-- **当日に使う画面の API（booth.php の scan、prize.php の api、status.php）は、
+- **当日に使う画面の API（booth.php の scan、reward.php の api、status.php）は、
   例外時も必ず JSON を返す**。PHP のエラーがそのまま画面に出ると現場を不安にさせる
   （`try { … } catch (Throwable $e) { … json … }` のパターン）
 - POST 処理後は `header('Location: …')` で GET に戻す（リロードによる二重送信防止）
@@ -99,7 +99,7 @@ WAL モード・busy_timeout 5000ms。
 - QR 読み取りは `BarcodeDetector`（Chrome/Android）→ 無ければ同梱 `jsQR`（iOS Safari 対策）
   の2段構え。読み取り文字列からコードを抜く `pick()` は booth/admin/register に
   同じ実装がコピーされている——**直すときは3か所そろえる**（test_pick.js が守っている
-  のは prize.php のもの）
+  のは reward.php のもの）
 - ブースの読み取りは1件ごとにカメラを閉じる（開きっぱなしだと近くの別QRを拾うため）
 - 全ページ `noindex,nofollow`
 - PHP 7.4 で動く書き方を守る（match 式・enum・readonly 等は使わない）
@@ -107,7 +107,7 @@ WAL モード・busy_timeout 5000ms。
 ## 6. テスト
 
 ```sh
-node tests/test_pick.js   # prize.php の pick()（QR文字列→名札コード抽出）を切り出して検証
+node tests/test_pick.js   # reward.php の pick()（QR文字列→名札コード抽出）を切り出して検証
 node tests/test_page.js   # index.html の <script> を fetch モックで回して表示の分岐を確認
 ```
 
@@ -137,7 +137,7 @@ Docker を使わない場合は `php -S localhost:8080 -t web` でも動くが�
 ### カメラ無しでの動作確認
 
 - スタンプ記録: `booth.php?b=トークン&key=鍵&scan=1&n=コード`
-- 参加登録 API: `prize.php?admin=鍵&api=register&n=コード`（名簿からの一括登録にも使う）
+- 参加登録 API: `reward.php?admin=鍵&api=register&n=コード`（名簿からの一括登録にも使う）
 - 進捗: `status.php?n=コード`
 - テスト用コードの採番は manage.php の名札印刷で（画面に出るコードは `pass_ok()` を満たす）
 
@@ -148,7 +148,7 @@ Docker を使わない場合は `php -S localhost:8080 -t web` でも動くが�
 3. DB の置き場所を確認する。既定の深さ（lib の4つ上）が公開領域の外になるか確かめ、
    ずれる構成なら `STAMP_DB_DIR` を設定する（.htaccess の `SetEnv` 等）
 4. `manage.php` を開いて Basic 認証が通ること、イベント名を設定して
-   `enroll.php` → `booth.php` → `register.php` → `prize.php` の一連が通ることを確認
+   `enroll.php` → `booth.php` → `register.php` → `reward.php` の一連が通ることを確認
 
 運用（キー発行・印刷・初期化・バックアップ）はユーザーマニュアルの主催者の節を参照。
 
@@ -157,9 +157,9 @@ Docker を使わない場合は `php -S localhost:8080 -t web` でも動くが�
 ```
 manage.php  : ekey 発行 ──→ enroll.php : booth 行を作成（token/key/enroll_key）
 manage.php  : act=issue で pass_new()×N を pass に登録（QRはPNG/ZIPで配布）
-（名簿発行分のみ）register.php→ prize.php?api=register : pass 行を作成（参加登録）
+（名簿発行分のみ）register.php→ reward.php?api=register : pass 行を作成（参加登録）
 booth.php?scan=1 : pass_ok + pass_registered を確認して scan に insert（重複は insert しない）
 index.html → status.php : scan を集計して進捗 JSON
-prize.php   : needs() と draw の件数を比べ、条件を満たせば draw に insert（特典N）
+reward.php   : needs() と draw の件数を比べ、条件を満たせば draw に insert（特典N）
 export.php  : scan/draw を集計、CSV 出力
 ```

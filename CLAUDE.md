@@ -12,13 +12,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **参加者は名札を下げているだけ**（端末には何も保存しない）。自分の名札QRを読めば進捗を確認できる
 - **出展者がブースで参加者の名札QRを読む**（`booth.php`）。ブースは登録キーでセルフ登録（`enroll.php`）
 - **受付が名札QRを読んで「参加登録」**（`register.php`。サーバ発行の名札は発行時に登録済み）。
-  登録済みの名札だけがラリーに参加でき、必要ブース数に達したら特典窓口（`prize.php`）で
+  登録済みの名札だけがラリーに参加でき、必要ブース数に達したら特典窓口（`reward.php`）で
   特典の判定・受け渡しをする
 
 ## テスト
 
 ```sh
-node tests/test_pick.js   # prize.php の pick()（QRの中身から名札コードを抽出）を切り出して検証
+node tests/test_pick.js   # reward.php の pick()（QRの中身から名札コードを抽出）を切り出して検証
 node tests/test_page.js   # index.html のスクリプトを fetch モックで回して表示の分岐を確認
 ```
 
@@ -44,7 +44,7 @@ docker run -d -p 8080:80 \
   `qr_stamp_rally/`——さくらのレンタルサーバでホーム直下＝公開領域の外になる深さ）
 
 カメラがなくても `booth.php?b=トークン&key=鍵&scan=1&n=コード` を直接叩けば読み取りを記録できる。
-`prize.php?admin=鍵&api=register&n=コード` で参加登録を API からもできる（名簿からの一括登録用）。
+`reward.php?admin=鍵&api=register&n=コード` で参加登録を API からもできる（名簿からの一括登録用）。
 
 ## 構成
 
@@ -53,7 +53,7 @@ docker run -d -p 8080:80 \
 | `web/index.html` | 参加者ページ（進捗表示。名札QRの行き先 `?n=コード`。`status.php` を叩く） |
 | `web/enroll.php` | ブースのセルフ登録（登録キー＋出展者名 → トークン・鍵と読み取りQRを発行） |
 | `web/booth.php` | ブースの読み取り画面（`?b=トークン&key=鍵`。応答は必ず JSON で返す） |
-| `web/prize.php` | 特典窓口（照会・特典の受け渡し。登録APIもここ。`?admin=鍵`） |
+| `web/reward.php` | 特典窓口（照会・特典の受け渡し。登録APIもここ。`?admin=鍵`） |
 | `web/register.php` | 参加登録専用の画面 |
 | `web/manage.php` | 管理コンソール（Basic 認証。イベント名・特典条件の設定、登録キーの発行・印刷、名札QRの発行（PNG配布・参加登録込み）、DBのバックアップ・初期化） |
 | `web/export.php` | 集計（`?admin=鍵`） |

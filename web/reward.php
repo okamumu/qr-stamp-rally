@@ -14,7 +14,7 @@ $msg  = '';
 
 // --- 登録API（curl等から叩ける）: ?admin=鍵&api=register&n=コード ---
 // 事前に参加が分かっている人を名簿から一括登録する用。例:
-//   curl "https://…/stamp/prize.php?admin=鍵&api=register&n=ABC23X"
+//   curl "https://…/stamp/reward.php?admin=鍵&api=register&n=ABC23X"
 if (isset($_REQUEST['api'])) {
     header('Content-Type: application/json; charset=utf-8');
     header('Cache-Control: no-store');
@@ -112,7 +112,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
     function go(code) {
       stop();
-      location.href = 'prize.php?admin=' + encodeURIComponent(KEY) + '&n=' + encodeURIComponent(code);
+      location.href = 'reward.php?admin=' + encodeURIComponent(KEY) + '&n=' + encodeURIComponent(code);
     }
 
     function stop() {

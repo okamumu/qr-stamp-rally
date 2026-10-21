@@ -162,7 +162,7 @@ $base = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
       . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/');   // ルート直下設置で // にならないように
 if ($print_admin):
     $rurl = $base . '/register.php?admin=' . rawurlencode(admin_key());
-    $aurl = $base . '/prize.php?admin=' . rawurlencode(admin_key());
+    $aurl = $base . '/reward.php?admin=' . rawurlencode(admin_key());
     $copies = min(10, max(1, (int)($_GET['n'] ?? 4)));
     for ($i = 0; $i < $copies; $i++): ?>
 <div class="slip">
@@ -306,12 +306,12 @@ QRのPNGは下の発行分一覧からいつでもダウンロードでき、名
   <input type="hidden" name="csrf" value="<?= $h($csrf) ?>">
   <button class="warn" name="act" value="reset_all">すべて初期化（年次の切り替え用）</button>
 </form>
-<h2>受付の鍵（prize.php・export.php 用）</h2>
+<h2>受付の鍵（reward.php・export.php 用）</h2>
 <?php $aurl = (is_https() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST']
-            . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/prize.php?admin=' . rawurlencode(admin_key()); ?>
+            . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/') . '/reward.php?admin=' . rawurlencode(admin_key()); ?>
 <p class="st mono"><?= $h(admin_key()) ?></p>
 <p class="st">参加登録（受付係） <a href="register.php?admin=<?= $h(admin_key()) ?>">register.php</a>／
-特典窓口（照会・受け渡し） <a href="prize.php?admin=<?= $h(admin_key()) ?>">prize.php</a>／
+特典窓口（照会・受け渡し） <a href="reward.php?admin=<?= $h(admin_key()) ?>">reward.php</a>／
 集計 <a href="export.php?admin=<?= $h(admin_key()) ?>">export.php</a>／
 <a href="#" onclick="document.getElementById('aqr').hidden=!document.getElementById('aqr').hidden;return false">受付用QRを表示</a>／
 <a href="?print=admin" target="_blank">受付スタッフ用紙を印刷</a>（4枚。枚数は ?print=admin&n=6 のように）</p>

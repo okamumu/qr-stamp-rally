@@ -1,6 +1,6 @@
-/* prize.php の pick()（QRの中身から名札コードを取り出す）を取り出して検証する */
+/* reward.php の pick()（QRの中身から名札コードを取り出す）を取り出して検証する */
 const fs = require('fs'), path = require('path');
-const src = fs.readFileSync(path.join(__dirname, '../web/prize.php'), 'utf8');
+const src = fs.readFileSync(path.join(__dirname, '../web/reward.php'), 'utf8');
 const body = src.match(/function pick\(text\) \{[\s\S]*?\n    \}/)[0];
 const pick = new Function('return ' + body)();
 
@@ -12,7 +12,7 @@ eq('他の引数つき',    pick('https://example.org/stamp/?x=1&n=ABFBGR&y=2'),
 eq('コード単体',      pick('9KXKVT'), '9KXKVT');
 eq('前後に空白',      pick('  9KXKVT \n'), '9KXKVT');
 eq('ブースQRは拾わない', pick('https://example.org/stamp/?b=UY6B'), '');
-eq('管理URLも拾える', pick('https://example.org/stamp/prize.php?admin=K&n=9KXKVT'), '9KXKVT');
+eq('管理URLも拾える', pick('https://example.org/stamp/reward.php?admin=K&n=9KXKVT'), '9KXKVT');
 eq('無関係なQR',      pick('https://example.com/'), '');
 eq('空',              pick(''), '');
 eq('紛らわしい文字を含む長い文字列', pick('NNNNNNNN'), '');
