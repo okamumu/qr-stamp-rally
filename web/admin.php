@@ -38,16 +38,14 @@ if ($code !== '' && isset($_POST['act'])) {
     if ($_POST['act'] === 'register' && pass_ok($code)) {
         pass_register($code);
         $msg = '参加登録しました。ラリーに参加できます';
-    } elseif ($_POST['act'] === 'gift') {
-        db()->prepare('UPDATE draw SET gift = "済" WHERE id = (SELECT MAX(id) FROM draw WHERE code = ?)')
-            ->execute([$code]);
-        $msg = '参加賞を渡しました';
-    } elseif ($_POST['act'] === 'draw1' && $d['count'] < 1 && $got >= need1()) {
-        db()->prepare('INSERT INTO draw (ts, code, n) VALUES (?, ?, 1)')->execute([now_(), $code]);
-        $msg = '1回目の抽選を記録しました';
-    } elseif ($_POST['act'] === 'draw2' && $d['count'] === 1 && $got >= need2()) {
-        db()->prepare('INSERT INTO draw (ts, code, n) VALUES (?, ?, 2)')->execute([now_(), $code]);
-        $msg = '2回目の抽選を記録しました';
+    } elseif ($_POST['act'] === 'draw') {
+        $needs = needs();
+        $k = $d['count'];                     // 済んだ段数。次に渡すのは特典 k+1
+        if ($k < count($needs) && $got >= $needs[$k]) {
+            db()->prepare('INSERT INTO draw (ts, code, n) VALUES (?, ?, ?)')
+                ->execute([now_(), $code, $k + 1]);
+            $msg = '特典' . ($k + 1) . 'を記録しました';
+        }
     }
     // 二重送信を防ぐため GET へ戻す
     header('Location: ?admin=' . urlencode(admin_key()) . '&n=' . urlencode($code) . '&m=' . urlencode($msg));
@@ -76,7 +74,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
  input{font:inherit;padding:10px;width:100%;box-sizing:border-box;border:1px solid #ccc;border-radius:8px}
  ul{margin:14px 0 0;padding-left:18px;color:#666;font-size:14px}
 </style>
-<h1>スタンプラリー　照会・抽選（抽選台）</h1>
+<h1>スタンプラリー　特典窓口（照会・受け渡し）</h1>
 <?php if ($msg): ?><div class="done"><?= $h($msg) ?></div><?php endif; ?>
 
 <?php if ($code === ''): ?>
@@ -179,30 +177,27 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 
 <?php else:
   $got = got_of($code); $n = count($got); $d = draw_of($code);
-  $can1 = $n >= need1() && $d['count'] < 1;
-  $can2 = $n >= need2() && $d['count'] === 1;   // 2回目は1回目実施済みが前提
+  $needs = needs();
+  $k = $d['count'];                                   // 済んだ段数
+  $can = $k < count($needs) && $n >= $needs[$k];      // 特典は順番に（特典2は特典1が済みなのが前提）
 ?>
   <h2>参加証</h2>
   <p class="c"><?= $h($code) ?></p>
   <div class="big"><?= $n ?> / <?= $all ?> ブース</div>
-  <div class="st">抽選 <b><?= $d['count'] ?></b> 回済み　参加賞 <?= $d['gift'] ? '<b>渡し済み</b>' : 'まだ' ?></div>
+  <div class="st"><?php foreach ($needs as $i => $x): ?>特典<?= $i + 1 ?> <?=
+    $k >= $i + 1 ? '<b>済み</b>' : 'まだ' ?>　<?php endforeach; ?></div>
 
   <form method="post">
     <input type="hidden" name="admin" value="<?= $h(admin_key()) ?>">
     <input type="hidden" name="n" value="<?= $h($code) ?>">
-    <?php if ($can1): ?>
-      <button class="ok" name="act" value="draw1">抽選（1回目）を実施</button>
-    <?php elseif ($can2): ?>
-      <button class="ok" name="act" value="draw2">抽選（2回目）を実施</button>
-    <?php elseif ($d['count'] >= 2): ?>
-      <div class="ng">2回とも抽選済みです</div>
-    <?php elseif ($d['count'] >= 1): ?>
-      <div class="ng">1回目は済み。<?= need2() ?>ブースそろうと2回目を引けます</div>
+    <?php if ($can): ?>
+      <button class="ok" name="act" value="draw">特典<?= $k + 1 ?></button>
+    <?php elseif ($k >= count($needs)): ?>
+      <div class="ng">特典はすべて済みです</div>
+    <?php elseif ($k >= 1): ?>
+      <div class="ng">特典<?= $k ?>まで済み。<?= $needs[$k] ?>ブースそろうと特典<?= $k + 1 ?>です</div>
     <?php else: ?>
-      <div class="ng">あと<?= need1() - $n ?>ブースです</div>
-    <?php endif; ?>
-    <?php if (!$d['gift'] && $d['count'] >= 1): ?>
-      <button class="sub" name="act" value="gift">参加賞を渡した</button>
+      <div class="ng">あと<?= $needs[0] - $n ?>ブースです</div>
     <?php endif; ?>
   </form>
 

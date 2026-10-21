@@ -3,7 +3,7 @@
  * 参加登録の専用画面（受付スタッフ用・2026-10-11新設）
  *
  * 名札QRを読むと**その場で自動登録**し、続けて次を読める（ボタン操作なし）。
- * 抽選・参加賞は admin.php（抽選台用）。登録の実体は admin.php の登録APIを叩く。
+ * 特典は admin.php（特典窓口用）。登録の実体は admin.php の登録APIを叩く。
  */
 require_once __DIR__ . '/lib/db.php';
 
@@ -37,7 +37,7 @@ $h = function ($s) { return htmlspecialchars((string)$s, ENT_QUOTES, 'UTF-8'); }
 </style>
 <h1>参加登録（受付）</h1>
 <p class="c">名札のQRを読むと、その場で登録されます。ボタン操作は不要です。
-抽選・参加賞は抽選台の画面（admin.php）で。</p>
+特典は特典窓口の画面（admin.php）で。</p>
 <div id="res">カメラを起動してください<small>登録済みの読み直しは黄色で出ます（害はありません）</small></div>
 <video id="v" playsinline muted hidden></video>
 <button id="btn" type="button">カメラを起動して読み取り開始</button>

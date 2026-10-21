@@ -14,7 +14,7 @@ function db() {
         ts TEXT NOT NULL, code TEXT NOT NULL, booth TEXT NOT NULL, note TEXT DEFAULT "")');
     $pdo->exec('CREATE TABLE IF NOT EXISTS draw (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        ts TEXT NOT NULL, code TEXT NOT NULL, n INTEGER NOT NULL, gift TEXT DEFAULT "")');
+        ts TEXT NOT NULL, code TEXT NOT NULL, n INTEGER NOT NULL)');
     $pdo->exec('CREATE INDEX IF NOT EXISTS ix_scan_code ON scan(code)');
     $pdo->exec('CREATE INDEX IF NOT EXISTS ix_draw_code ON draw(code)');
     // 参加登録（受付で登録した名札だけがラリーに参加できる）
@@ -48,12 +48,11 @@ function got_of($code) {
     return $q->fetchAll(PDO::FETCH_COLUMN);
 }
 
-/** 抽選の回数と参加賞の受取 */
+/** 特典の受け取り回数 */
 function draw_of($code) {
-    $q = db()->prepare('SELECT COUNT(*) c, MAX(CASE WHEN gift <> "" THEN 1 ELSE 0 END) g FROM draw WHERE code = ?');
+    $q = db()->prepare('SELECT COUNT(*) FROM draw WHERE code = ?');
     $q->execute([$code]);
-    $r = $q->fetch(PDO::FETCH_ASSOC);
-    return ['count' => (int)$r['c'], 'gift' => (bool)$r['g']];
+    return ['count' => (int)$q->fetchColumn()];
 }
 
 /** 参加登録済みか（受付で登録した名札だけがラリーに参加できる） */

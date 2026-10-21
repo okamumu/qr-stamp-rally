@@ -23,10 +23,8 @@ echo json_encode([
     'code'  => $code,
     'got'   => array_values($got),
     'all'   => count($names),
-    'need1' => need1(),
-    'need2' => need2(),
+    'needs' => needs(),
     'draw'  => $d['count'],
-    'gift'  => $d['gift'],
     'booths' => $names,
 ], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {

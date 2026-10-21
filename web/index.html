@@ -54,13 +54,12 @@
   <ol>
     <li>ブースで<b>展示のご説明を聞いてください</b></li>
     <li>ブースの方が<b>あなたの名札のQRを読み取ります</b>（スマートフォンは不要です）</li>
-    <li><b id="need1">1</b>ブース回ったら総合受付へ。<b>その場で抽選</b>できます</li>
-    <li><b id="need2">4</b>ブース回ると<b>もう1回</b>引けます</li>
+    <li>規定数のブースを回ったら総合受付へ。<b>その場で特典</b>を受け取れます<br>
+        <span id="needtxt" style="font-size:13px;color:#666"></span></li>
   </ol>
   <p style="margin-top:8px;color:#888;font-size:13px">
     このページは<b>いまいくつ集まったかを見るためのもの</b>です。
-    自分の名札のQRを読み取ると、いつでも確認できます。<br>
-    参加賞は抽選のときに全員にお渡しします。</p>
+    自分の名札のQRを読み取ると、いつでも確認できます。</p>
 </div>
 
 <p class="foot">
@@ -82,18 +81,21 @@ function msg(cls, t) { return card('<div class="msg ' + cls + '">' + esc(t) + '<
 function render(d) {
   const n = d.got.length, all = d.all, pct = Math.min(100, Math.round(n / all * 100));
   let goal;
-  const need2 = d.need2 || all;
-  if (n >= need2) {
-    goal = '<div class="goal on2">' + need2 + 'ブース達成！<br>総合受付で<b>2回</b>抽選できます</div>';
-  } else if (n >= d.need1) {
-    goal = '<div class="goal on">' + d.need1 + 'ブース達成！<br>総合受付で<b>抽選</b>できます'
-         + '<div style="font-weight:400;font-size:14px;margin-top:6px">'
-         + 'あと' + (need2 - n) + 'ブースでもう1回引けます</div></div>';
+  const needs = d.needs || [];
+  const k = needs.filter(function (x) { return n >= x; }).length;  // 達成した段数
+  if (k === 0) {
+    goal = '<div class="goal off">あと' + (needs[0] - n) + 'ブースで特典1です</div>';
   } else {
-    goal = '<div class="goal off">あと' + (d.need1 - n) + 'ブースで抽選に参加できます</div>';
+    goal = '<div class="goal ' + (k >= needs.length ? 'on2' : 'on') + '">特典'
+         + (needs.length > 1 ? k + 'まで' : 'を') + '達成！<br>総合受付で<b>特典</b>を受け取れます';
+    if (k < needs.length) {
+      goal += '<div style="font-weight:400;font-size:14px;margin-top:6px">'
+            + 'あと' + (needs[k] - n) + 'ブースで特典' + (k + 1) + 'です</div>';
+    }
+    goal += '</div>';
   }
-  if (d.draw >= 2) goal += '<div class="goal off" style="margin-top:8px">抽選は2回とも済んでいます</div>';
-  else if (d.draw >= 1) goal += '<div class="goal off" style="margin-top:8px">抽選を1回受け取り済みです</div>';
+  if (needs.length && d.draw >= needs.length) goal += '<div class="goal off" style="margin-top:8px">特典はすべて受け取り済みです</div>';
+  else if (d.draw >= 1) goal += '<div class="goal off" style="margin-top:8px">特典' + d.draw + 'まで受け取り済みです</div>';
 
   let i = 0;
   const list = Object.keys(d.booths).map(function (t) {
@@ -109,8 +111,8 @@ function render(d) {
     + goal + '<ol>' + list + '</ol>'
     + '<button class="reload" type="button" onclick="location.reload()">最新の状態にする</button>');
 
-  document.getElementById('need1').textContent = d.need1;
-  document.getElementById('need2').textContent = need2;
+  document.getElementById('needtxt').textContent =
+    needs.map(function (x, i) { return x + 'ブースで特典' + (i + 1); }).join('、');
   document.getElementById('mycode').textContent = '名札コード ' + d.code;
 }
 

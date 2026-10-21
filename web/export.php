@@ -14,7 +14,6 @@ $total   = (int)db()->query('SELECT COUNT(DISTINCT code) FROM scan')->fetchColum
 $reached = (int)db()->query('SELECT COUNT(*) FROM (SELECT code FROM scan WHERE booth <> "start"
                              GROUP BY code HAVING COUNT(DISTINCT booth) >= ' . need1() . ')')->fetchColumn();
 $drawn   = (int)db()->query('SELECT COUNT(*) FROM draw')->fetchColumn();
-$gift    = (int)db()->query('SELECT COUNT(*) FROM draw WHERE gift <> ""')->fetchColumn();
 
 if ($fmt === 'booth' || $fmt === 'scan' || $fmt === 'draw') {
     header('Content-Type: text/csv; charset=utf-8');
@@ -59,9 +58,7 @@ $k = urlencode(admin_key());
 <div class="sum">
   <div><b><?= $total ?></b>参加者</div>
   <div><b><?= $reached ?></b><?= need1() ?>ブース達成</div>
-  <div><b><?= $drawn ?></b>抽選</div>
-  <div><b><?= $gift ?></b>参加賞</div>
-</div>
+  <div><b><?= $drawn ?></b>特典受取</div></div>
 <table>
   <tr><th>区画</th><th>出展者名</th><th>来訪者数</th></tr>
   <?php $i = 0; foreach ($boo as $t => $name): ?>
@@ -72,5 +69,5 @@ $k = urlencode(admin_key());
 <p>CSV：
  <a href="?admin=<?= $k ?>&csv=booth">ブース別</a>　
  <a href="?admin=<?= $k ?>&csv=scan">スキャン全件</a>　
- <a href="?admin=<?= $k ?>&csv=draw">抽選記録</a></p>
+ <a href="?admin=<?= $k ?>&csv=draw">特典記録</a></p>
 <p><a href="admin.php?admin=<?= $k ?>">受付へ戻る</a></p>
